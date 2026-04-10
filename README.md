@@ -2,7 +2,7 @@
 
 > **Una app premium de gestión de alquileres comerciales potenciada por Inteligencia Artificial.**
 
-QhatuFy es una plataforma vanguardista desarrollada para priorizar una experiencia de usuario de élite (`Premium Dark Aesthetic`) fusionada con herramientas automatizadas para la administración y gestión operativa del patrimonio en arrendamientos comerciales.
+QhatuFy es una plataforma vanguardista desarrollada para priorizar una experiencia de usuario de élite fusionada con herramientas automatizadas para la administración y gestión operativa del patrimonio en arrendamientos comerciales.
 
 ---
 
@@ -11,7 +11,7 @@ QhatuFy es una plataforma vanguardista desarrollada para priorizar una experienc
 Actualmente, el proyecto se encuentra en fases intensas de desarrollo. Hoy tenemos consolidada con éxito la primera capa estructural de la aplicación:
 
 - ✅ **Arquitectura Base**: Arquitectura reactiva encapsulada y optimizada para producción móvil.
-- ✅ **Sistema Autónomo de Autenticación**: El flujo completo de *Welcome*, *Login* y *Register* está 100% operativo tanto a nivel visual como lógico.
+- ✅ **Sistema Autónomo de Autenticación**: El flujo completo de *Welcome*, *Login* y *Register* está operativo.
 - ✅ **AuthGuard Riguroso**: Enrutador guardián (en `_layout.tsx`) diseñado inteligentemente que aísla de inmediato las áreas públicas de las zonas de gestión operativas (`Dashboard`), evitando parpadeos de transiciones (Double-routing Jump).
 
 ---
@@ -57,17 +57,7 @@ Levantar a producción inicial el entorno es cuestión de instantes:
 *(Teclas útiles durante el servidor activo)*
 - Preciona `a` para abrir simulador de Android.
 - Presiona `i` para abrir simulador de iOS.
-
+- Presiona `w` para abrir simulador en Web.
 ---
 
-## 📱 Vista Previa: Diseño Corporativo Stitch
-
-Así es como luce el poder de la Interfaz *Stitch Premium Mode* a medida.
-*(Asegúrate de agregar tus capturas reemplazando en los recuadros siguientes)*
-
-| Pantalla Welcome | Pantalla Login | Pantalla Registro | Dashboard Activo |
-| :---: | :---: | :---: | :---: |
-| 🖼️ *(Sube imagen aquí)* | 🖼️ *(Sube imagen aquí)* | 🖼️ *(Sube imagen aquí)* | 🖼️ *(Sube imagen aquí)* |
-
----
 **© 2026 QhatuFy Enterprise.**
