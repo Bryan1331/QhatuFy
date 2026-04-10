@@ -1,0 +1,57 @@
+# Dependencias
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log*
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Entornos (Variables de Entorno Secretas)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.local
+
+# Cache y archivos generados por Metro
+.metro-health-check-id
+.eslintcache
+
+# Archivos de certificados nativos (Seguridad vital)
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Entornos de desarrollo y editores de código
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.user
+
+# Archivos propios del Sistema Operativo
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+$RECYCLE.BIN/
+
+# CocoaPods y Dependencias de iOS (Si se expulsa a bare workflow)
+/ios/Pods/
+/ios/Podfile.lock
+
+# Cachés de compilación nativa Android/iOS
+/android/app/build/
+/android/.gradle/
+/android/build/
+/ios/build/
+/android/local.properties
