@@ -20,17 +20,24 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  const [errorMsg, setErrorMsg] = useState('');
+
   const onLogin = () => {
-    setAuth((prev) => ({
-      ...prev,
-      isAuthenticated: true,
-      user: {
-        id: '1',
-        name: 'Admin',
-        email: email || 'admin@corporativo.com',
-        hasCompletedProfile: true,
-      }
-    }));
+    setErrorMsg('');
+    if (email.trim().toLowerCase() === 'admin@qhatufy.com' && password === 'admin123') {
+      setAuth((prev) => ({
+        ...prev,
+        isAuthenticated: true,
+        user: {
+          id: '1',
+          name: 'Admin',
+          email: 'admin@qhatufy.com',
+          hasCompletedProfile: true,
+        }
+      }));
+    } else {
+      setErrorMsg('Credenciales incorrectas. Intente nuevamente.');
+    }
   };
 
   return (
@@ -43,8 +50,8 @@ export default function LoginScreen() {
           {/* Retroceder */}
           {router.canGoBack() && (
             <View className="absolute top-8 left-5 z-50">
-              <TouchableOpacity 
-                onPress={() => router.back()} 
+              <TouchableOpacity
+                onPress={() => router.back()}
                 className="p-4 items-center justify-center rounded-full bg-white/5 border border-white/10"
               >
                 <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -82,7 +89,7 @@ export default function LoginScreen() {
                 <View className="flex-1 ml-3 h-full justify-center">
                   <TextInput
                     style={{ color: 'white', fontSize: 16 }}
-                    placeholder="nombre@corporativo.com"
+                    placeholder="nombre@correo.com"
                     placeholderTextColor="#8E8E93"
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -127,6 +134,13 @@ export default function LoginScreen() {
               </TouchableOpacity>
               <Text className="text-gray-400 text-sm">Recordarme</Text>
             </View>
+
+            {/* Error Message */}
+            {errorMsg ? (
+              <View className="mb-4 bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+                <Text className="text-red-400 text-sm text-center">{errorMsg}</Text>
+              </View>
+            ) : null}
 
             {/* Login Button */}
             <TouchableOpacity onPress={onLogin}>

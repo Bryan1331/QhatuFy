@@ -9,6 +9,8 @@ export interface User {
   name: string;
   email: string;
   hasCompletedProfile: boolean;
+  dni?: string;
+  direccion?: string;
 }
 
 export interface AuthState {

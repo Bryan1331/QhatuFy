@@ -34,10 +34,16 @@ function InitialLayout() {
       setTimeout(() => {
         router.replace('/welcome' as Href);
       }, 0);
-    } else if (authState.isAuthenticated && String(segments[0]) !== '(private)') {
-      setTimeout(() => {
-        router.replace('/(private)/dashboard' as Href);
-      }, 0);
+    } else if (authState.isAuthenticated) {
+      const inPrivateGroup = String(segments[0]) === '(private)';
+      const isCompleteProfile = String(segments[0]) === '(auth)' && String(segments[1]) === 'complete-profile';
+      
+      // Permitir estar en dashboard o en la pantalla de completar perfil
+      if (!inPrivateGroup && !isCompleteProfile) {
+        setTimeout(() => {
+          router.replace('/(private)/dashboard' as Href);
+        }, 0);
+      }
     }
   }, [authState.isAuthenticated, segments, navigationState?.key, isReady]);
 

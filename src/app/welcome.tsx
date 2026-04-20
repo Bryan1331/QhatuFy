@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Platform, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 /**
@@ -21,37 +21,37 @@ export default function WelcomeScreen() {
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 800,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       })
     ]).start();
   }, []);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0F1115' }}>
-      <Animated.View 
-        style={{ 
-          flex: 1, 
-          opacity: fadeAnim, 
-          transform: [{ translateY: slideAnim }] 
-        }} 
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#131517' }}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
+        }}
         className="flex-1 justify-center px-6"
       >
         {/* Icono Central Superpuesto */}
         <View className="items-center mb-[70px]">
-          <View className="w-[100px] h-[100px] bg-[#16181D] rounded-full items-center justify-center mb-8 shadow-2xl">
-            <Ionicons name="business" size={42} color="#ADC6FF" />
+          <View className="w-[120px] h-[120px] bg-[#1E1F22] rounded-full items-center justify-center mb-8">
+            <Ionicons name="business" size={54} color="#ADC6FF" />
           </View>
-          
-          <Text className="text-white text-5xl font-extrabold tracking-tight mb-4">
+
+          <Text className="text-white text-[44px] font-extrabold tracking-tight mb-4">
             QhatuFy
           </Text>
-          
-          <Text className="text-gray-400 text-base text-center px-4 leading-6">
+
+          <Text className="text-[#9CA3AF] text-[17px] text-center px-6 leading-7">
             La nueva era en gestión de locales comerciales
           </Text>
         </View>
@@ -59,26 +59,43 @@ export default function WelcomeScreen() {
         {/* Botones de Navegación (Auth) */}
         <View className="w-full space-y-4">
           <Link href="/(auth)/register" asChild>
-            <TouchableOpacity className="bg-[#6B9EFA] rounded-full py-[18px] items-center flex-row justify-center mb-4 shadow-lg shadow-blue-900/30">
-              <Text className="text-[#0F1115] font-bold text-lg mr-2">Crear una cuenta</Text>
-              <Ionicons name="arrow-forward" size={20} color="#0F1115" />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={
+                Platform.OS === 'web'
+                  ? { boxShadow: '0px 8px 20px rgba(122, 166, 250, 0.3)' } as any
+                  : {
+                      shadowColor: '#7AA6FA',
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 20,
+                      elevation: 10,
+                    }
+              }
+              className="bg-[#7AA6FA] rounded-full py-[18px] items-center flex-row justify-center mb-4"
+            >
+              <Text className="text-[#0D1526] font-bold text-lg mr-2">Crear una cuenta</Text>
+              <Ionicons name="arrow-forward" size={20} color="#0D1526" />
             </TouchableOpacity>
           </Link>
 
           <Link href="/(auth)/login" asChild>
-            <TouchableOpacity className="bg-transparent border-[1.5px] border-white/10 rounded-full py-[18px] items-center bg-[#16181D]">
-              <Text className="text-white font-bold text-lg">Iniciar Sesión</Text>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              className="bg-[#1E1F22] rounded-full py-[18px] items-center justify-center border border-white/5"
+            >
+              <Text className="text-white font-semibold text-lg">Iniciar Sesión</Text>
             </TouchableOpacity>
           </Link>
         </View>
 
         {/* Footer Legal */}
         <View className="absolute bottom-10 left-0 right-0 items-center">
-          <Text className="text-gray-500/80 text-[10px] tracking-widest font-bold uppercase">
+          <Text className="text-[#6B7280] text-[11px] tracking-[0.1em] font-medium uppercase">
             Al continuar, aceptas nuestros términos
           </Text>
         </View>
-        
+
       </Animated.View>
     </SafeAreaView>
   );
