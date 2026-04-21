@@ -37,15 +37,20 @@ function InitialLayout() {
     } else if (authState.isAuthenticated) {
       const inPrivateGroup = String(segments[0]) === '(private)';
       const isCompleteProfile = String(segments[0]) === '(auth)' && String(segments[1]) === 'complete-profile';
-      
-      // Permitir estar en dashboard o en la pantalla de completar perfil
-      if (!inPrivateGroup && !isCompleteProfile) {
+      const hasCompletedProfile = authState.user?.hasCompletedProfile;
+
+      // Si está autenticado, su hogar es el dashboard, a menos que esté en complete-profile y le falte completarlo
+      if (!inPrivateGroup) {
+        if (isCompleteProfile && !hasCompletedProfile) {
+          // Permitimos que se quede en la pantalla de completar perfil
+          return;
+        }
         setTimeout(() => {
           router.replace('/(private)/dashboard' as Href);
         }, 0);
       }
     }
-  }, [authState.isAuthenticated, segments, navigationState?.key, isReady]);
+  }, [authState.isAuthenticated, authState.user?.hasCompletedProfile, segments, navigationState?.key, isReady]);
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

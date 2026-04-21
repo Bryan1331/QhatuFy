@@ -62,26 +62,28 @@ export default function DashboardScreen() {
         </View>
 
         {/* Warning: Completa tu Perfil */}
-        <View className="bg-[#1C130D] rounded-[20px] mb-8 border-l-4 border-[#F97316] py-4 px-4 shadow-sm">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <View className="bg-[#F97316] w-5 h-5 rounded-full items-center justify-center mr-3">
-                <Text className="text-black text-[10px] font-extrabold pb-0.5">!</Text>
+        {!auth.user?.hasCompletedProfile && (
+          <View className="bg-[#1C130D] rounded-[20px] mb-8 border-l-4 border-[#F97316] py-4 px-4 shadow-sm">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="bg-[#F97316] w-5 h-5 rounded-full items-center justify-center mr-3">
+                  <Text className="text-black text-[10px] font-extrabold pb-0.5">!</Text>
+                </View>
+                <Text className="text-white text-[11px] font-medium leading-4 flex-1 pr-2">
+                  Completa tu perfil para agendar citas
+                </Text>
               </View>
-              <Text className="text-white text-[11px] font-medium leading-4 flex-1 pr-2">
-                Completa tu perfil para agendar citas
-              </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/complete-profile')}>
+                <Text className="text-[#F97316] text-[10px] font-bold tracking-widest">COMPLETAR</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => router.push('/(auth)/complete-profile')}>
-              <Text className="text-[#F97316] text-[10px] font-bold tracking-widest">COMPLETAR</Text>
-            </TouchableOpacity>
+            {/* Barra de Progreso */}
+            <View className="flex-row items-center h-1 mt-3 ml-8">
+              <View className="w-24 h-1 bg-[#F97316] rounded-full" />
+              <View className="w-12 h-1 bg-[#3A2415] rounded-full ml-1" />
+            </View>
           </View>
-          {/* Barra de Progreso */}
-          <View className="flex-row items-center h-1 mt-3 ml-8">
-            <View className="w-24 h-1 bg-[#F97316] rounded-full" />
-            <View className="w-12 h-1 bg-[#3A2415] rounded-full ml-1" />
-          </View>
-        </View>
+        )}
 
         {/* Card: Próximo Pago */}
         <View className="bg-[#181920] rounded-[32px] p-6 mb-8 border border-white/5 font-sans">

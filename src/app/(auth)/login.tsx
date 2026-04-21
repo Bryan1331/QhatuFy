@@ -32,7 +32,7 @@ export default function LoginScreen() {
           id: '1',
           name: 'Admin',
           email: 'admin@qhatufy.com',
-          hasCompletedProfile: true,
+          hasCompletedProfile: false,
         }
       }));
     } else {
