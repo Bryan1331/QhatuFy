@@ -2,8 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View, Image, Alert, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
+import { Camera } from 'lucide-react-native';
 import { authAtom } from '../../store/authAtom';
 
 export default function CompleteProfileScreen() {
@@ -12,6 +14,33 @@ export default function CompleteProfileScreen() {
 
   const [dni, setDni] = useState('');
   const [direccion, setDireccion] = useState('');
+  const [dniFront, setDniFront] = useState<string | null>(null);
+  const [dniBack, setDniBack] = useState<string | null>(null);
+
+  const pickImage = async (side: 'front' | 'back') => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert('Permiso denegado', 'Necesitamos acceso a tus fotos para poder subir tu documento.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      if (side === 'front') {
+        setDniFront(result.assets[0].uri);
+      } else {
+        setDniBack(result.assets[0].uri);
+      }
+    }
+  };
+
+  // Validar si el DNI tiene entre 8 y 11 dígitos, la dirección está y las imágenes subidas
+  const isFormValid = dni.length >= 8 && direccion.trim().length > 0 && dniFront !== null && dniBack !== null;
 
   const onFinish = () => {
     // Validar si es necesario, o simplemente pasar si hay datos
@@ -91,11 +120,51 @@ export default function CompleteProfileScreen() {
               />
             </View>
 
+            {/* Documento de Identidad KYC */}
+            <Text className="text-white/80 font-semibold mt-6 mb-3 px-1">Documento de Identidad</Text>
+            
+            <View className="flex-row justify-between">
+              {/* Cara Frontal */}
+              <Pressable 
+                className="border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-4 items-center justify-center h-32 flex-1 mx-1 active:bg-white/5"
+                onPress={() => pickImage('front')}
+              >
+                {dniFront ? (
+                  <Image source={{ uri: dniFront }} className="w-full h-full rounded-xl object-cover" />
+                ) : (
+                  <>
+                    <Camera color="#6B7280" size={24} />
+                    <Text className="text-[#6B7280] text-xs mt-2 font-medium">Subir frente</Text>
+                  </>
+                )}
+              </Pressable>
+
+              {/* Cara Posterior */}
+              <Pressable 
+                className="border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-4 items-center justify-center h-32 flex-1 mx-1 active:bg-white/5"
+                onPress={() => pickImage('back')}
+              >
+                {dniBack ? (
+                  <Image source={{ uri: dniBack }} className="w-full h-full rounded-xl object-cover" />
+                ) : (
+                  <>
+                    <Camera color="#6B7280" size={24} />
+                    <Text className="text-[#6B7280] text-xs mt-2 font-medium">Subir reverso</Text>
+                  </>
+                )}
+              </Pressable>
+            </View>
+
           </View>
 
           {/* Bottom actions */}
           <View className="mt-[50px] items-center">
-            <TouchableOpacity onPress={onFinish} className="py-4 px-8">
+            <TouchableOpacity 
+              onPress={onFinish} 
+              className="py-4 px-8"
+              disabled={!isFormValid}
+              style={{ opacity: isFormValid ? 1 : 0.4 }}
+            >
               <Text className="text-[#0957D0] text-[15px] font-bold">Finalizar y empezar</Text>
             </TouchableOpacity>
           </View>

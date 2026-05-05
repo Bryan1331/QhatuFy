@@ -3,7 +3,9 @@ import { useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { Image, Platform, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { PaymentCard } from '../../components/dashboard/PaymentCard';
 import { authAtom } from '../../store/authAtom';
+import { PaymentRequirement } from '../../types/payment';
 
 /**
  * DashboardScreen
@@ -23,6 +25,33 @@ export default function DashboardScreen() {
       token: null,
     });
   };
+
+  const mockPayments: PaymentRequirement[] = [
+    {
+      id: '1',
+      contractName: 'Local Comercial - Sector A',
+      amount: 1250,
+      currency: 'PEN',
+      dueDate: '2026-05-31T00:00:00.000Z',
+      isPaid: false,
+    },
+    {
+      id: '2',
+      contractName: 'Stand 15 - Zona Tecnológica',
+      amount: 800,
+      currency: 'PEN',
+      dueDate: '2026-05-12T00:00:00.000Z',
+      isPaid: false,
+    },
+    {
+      id: '3',
+      contractName: 'Almacén B',
+      amount: 400,
+      currency: 'PEN',
+      dueDate: '2026-04-15T00:00:00.000Z',
+      isPaid: true,
+    }
+  ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D0D0D', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
@@ -86,19 +115,8 @@ export default function DashboardScreen() {
         )}
 
         {/* Card: Próximo Pago */}
-        <View className="bg-[#181920] rounded-[32px] p-6 mb-8 border border-white/5 font-sans">
-          <Text className="text-gray-400 text-[10px] font-bold tracking-widest mb-3">PRÓXIMO PAGO</Text>
-          <View className="flex-row items-baseline mb-3">
-            <Text className="text-white text-4xl font-extrabold tracking-tight">s/1,250.00</Text>
-            <Text className="text-gray-400 text-xs font-semibold ml-2">PEN</Text>
-          </View>
-          <View className="flex-row items-center mb-6">
-            <Ionicons name="calendar-outline" size={14} color="#D1D5DB" />
-            <Text className="text-gray-300 text-xs ml-2 font-medium">Vence el 15 de Octubre</Text>
-          </View>
-          <TouchableOpacity className="bg-[#5C8FFB] rounded-[24px] py-4 items-center">
-            <Text className="text-white font-bold text-[15px]">Pagar ahora</Text>
-          </TouchableOpacity>
+        <View className="mb-8">
+          <PaymentCard payments={mockPayments} />
         </View>
 
         {/* Sección: Gestión Rápida */}
