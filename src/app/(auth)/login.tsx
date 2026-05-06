@@ -1,177 +1,208 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useSetAtom } from 'jotai';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { authAtom } from '../../store/authAtom';
+import { signInUser } from '../../services/authService';
 
 /**
  * LoginScreen
  * -----------
- * Pantalla de inicio de sesión corporativa.
- * Maneja el estado local del formulario e inyecta la simulación de login hacia el authAtom.
+ * Pantalla de inicio de sesión corporativa con validaciones de seguridad
+ * y conexión real a Supabase.
  */
 export default function LoginScreen() {
   const router = useRouter();
   const setAuth = useSetAtom(authAtom);
+  
+  // Estado de credenciales
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
+  // Estados de retroalimentación visual (UX)
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const onLogin = () => {
+  /**
+   * Maneja el flujo de inicio de sesión.
+   * Valida localmente antes de consultar a Supabase para ahorrar peticiones de red.
+   */
+  const onLogin = async () => {
     setErrorMsg('');
-    if (email.trim().toLowerCase() === 'admin@qhatufy.com' && password === 'admin123') {
-      setAuth((prev) => ({
-        ...prev,
+
+    // Validaciones de campos vacíos
+    if (!email.trim() || !password) {
+      setErrorMsg('Por favor, completa todos los campos.');
+      return;
+    }
+
+    // Validación formato email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMsg('Email inválido');
+      return;
+    }
+
+    try {
+      setLoading(true); // Bloquea la UI para evitar doble envío
+      const user = await signInUser(email, password);
+      
+      // Actualiza el estado global (Jotai) permitiendo que _layout.tsx decida el enrutamiento
+      setAuth({
         isAuthenticated: true,
         user: {
-          id: '1',
-          name: 'Admin',
-          email: 'admin@qhatufy.com',
-          hasCompletedProfile: false,
-        }
-      }));
-    } else {
-      setErrorMsg('Credenciales incorrectas. Intente nuevamente.');
+          id: user.id,
+          name: user.user_metadata?.full_name || 'Usuario',
+          email: user.email || email,
+          // Dependiendo del KYC, esto forzará o evitará pasar por /complete-profile
+          hasCompletedProfile: user.user_metadata?.hasCompletedProfile || false,
+        },
+        token: null, // El token de sesión será manejado luego por Supabase Auth
+      });
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#111111' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <View className="flex-1 justify-center px-5">
-          {/* Retroceder */}
-          {router.canGoBack() && (
-            <View className="absolute top-8 left-5 z-50">
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+          
+          {/* Header & Back */}
+          <View className="px-5 py-5 mt-2 flex-row items-center">
+            {router.canGoBack() && (
               <TouchableOpacity
                 onPress={() => router.back()}
-                className="p-4 items-center justify-center rounded-full bg-white/5 border border-white/10"
+                className="p-3 mr-2 rounded-full border border-white/10 bg-white/5 active:bg-white/10"
               >
-                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+                <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
               </TouchableOpacity>
-            </View>
-          )}
+            )}
+            <Text className="text-[#5C8FFB] text-2xl font-extrabold tracking-tight">QhatuFy</Text>
+          </View>
 
           {/* Top Logo */}
-          <View className="items-center mb-8">
-            <View className="flex-row items-center mb-6">
-              <View className="bg-[#3B82F6]/20 p-2 rounded-full mr-3">
-                <Ionicons name="lock-closed" size={20} color="#3B82F6" />
-              </View>
-              <Text className="text-white text-xl font-bold tracking-tight">QhatuFy</Text>
+          <View className="items-center mb-6 mt-4">
+            <View className="bg-blue-600/20 p-3 rounded-full mb-4">
+              <Ionicons name="lock-closed" size={24} color="#5C8FFB" />
             </View>
-
-            <Text className="text-white text-[42px] font-extrabold text-center tracking-tight mb-2">
-              QhatuFy
+            <Text className="text-white text-3xl font-extrabold text-center tracking-tight mb-2">
+              Bienvenido
             </Text>
-            <Text className="text-gray-400 text-base text-center px-6">
-              Gestión Inteligente
+            <Text className="text-gray-400 text-sm text-center px-6 leading-5">
+              Ingrese sus credenciales para acceder a la gestión de su patrimonio
             </Text>
           </View>
 
           {/* Central Card */}
-          <View className="bg-[#1C1C1E] rounded-[32px] p-7 shadow-2xl shadow-black/80">
+          <View className="p-8 mx-2 flex-1 mb-8">
+            
+            {/* Error Message */}
+            {errorMsg ? (
+              <Text className="text-red-400 mb-6 font-medium text-center">
+                {errorMsg}
+              </Text>
+            ) : null}
 
             {/* Email Field */}
-            <View className="mb-6">
-              <Text className="text-gray-400 text-xs font-bold mb-2 uppercase tracking-widest ml-1">
+            <View className="mb-5">
+              <Text className="text-white/60 text-[10px] font-bold mb-2 uppercase tracking-widest ml-1">
                 Correo Electrónico
               </Text>
-              <View className="flex-row items-center bg-[#2C2C2E] rounded-[20px] px-4 py-1 h-14">
-                <Ionicons name="mail-outline" size={20} color="#8E8E93" />
-                <View className="flex-1 ml-3 h-full justify-center">
-                  <TextInput
-                    style={{ color: 'white', fontSize: 16 }}
-                    placeholder="nombre@correo.com"
-                    placeholderTextColor="#8E8E93"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
-                  />
-                </View>
+              <View className="flex-row items-center bg-[#1C1C1E] rounded-2xl h-14 px-4 border border-white/10">
+                <Ionicons name="mail" size={18} color="#6B7280" />
+                <TextInput
+                  className="flex-1 ml-3 text-white text-[15px]"
+                  placeholder="nombre@correo.com"
+                  placeholderTextColor="#6B7280"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                  editable={!loading}
+                />
               </View>
             </View>
 
             {/* Password Field */}
             <View className="mb-6">
-              <Text className="text-gray-400 text-xs font-bold mb-2 uppercase tracking-widest ml-1">
+              <Text className="text-white/60 text-[10px] font-bold mb-2 uppercase tracking-widest ml-1">
                 Contraseña
               </Text>
-              <View className="flex-row items-center bg-[#2C2C2E] rounded-[20px] px-4 py-1 h-14">
-                <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" />
-                <View className="flex-1 ml-3 h-full justify-center">
-                  <TextInput
-                    style={{ color: 'white', fontSize: 16 }}
-                    placeholder="••••••••"
-                    placeholderTextColor="#8E8E93"
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={setPassword}
-                  />
-                </View>
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <View className="p-1">
-                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#8E8E93" />
-                  </View>
+              <View className="flex-row items-center bg-[#1C1C1E] rounded-2xl h-14 px-4 border border-white/10">
+                <Ionicons name="lock-closed" size={18} color="#6B7280" />
+                <TextInput
+                  className="flex-1 ml-3 text-white text-[15px]"
+                  placeholder="••••••••"
+                  placeholderTextColor="#6B7280"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                  editable={!loading}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2" disabled={loading}>
+                  <Ionicons name={showPassword ? "eye" : "eye-off"} size={20} color="#6B7280" />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Remember me */}
-            <View className="flex-row items-center mb-8 ml-1">
-              <TouchableOpacity onPress={() => setRememberMe(!rememberMe)}>
-                <View className={`w-5 h-5 rounded-full border mr-3 items-center justify-center ${rememberMe ? 'bg-[#3B82F6] border-[#3B82F6]' : 'bg-[#2C2C2E] border-gray-600'}`}>
-                  {rememberMe && <Ionicons name="checkmark" size={14} color="white" />}
-                </View>
+            {/* Remember me & Forgot Password */}
+            <View className="flex-row items-center justify-between mb-8 ml-1">
+              <View className="flex-row items-center">
+                <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} disabled={loading}>
+                  <View className={`w-5 h-5 rounded-full border mr-3 items-center justify-center ${rememberMe ? 'bg-blue-600 border-blue-600' : 'bg-[#1C1C1E] border-white/30'}`}>
+                    {rememberMe && <Ionicons name="checkmark" size={14} color="white" />}
+                  </View>
+                </TouchableOpacity>
+                <Text className="text-gray-300 text-sm">Recordarme</Text>
+              </View>
+
+              <TouchableOpacity disabled={loading}>
+                <Text className="text-blue-500 text-sm font-bold">¿Olvidaste tu contraseña?</Text>
               </TouchableOpacity>
-              <Text className="text-gray-400 text-sm">Recordarme</Text>
             </View>
 
-            {/* Error Message */}
-            {errorMsg ? (
-              <View className="mb-4 bg-red-500/10 p-3 rounded-xl border border-red-500/20">
-                <Text className="text-red-400 text-sm text-center">{errorMsg}</Text>
-              </View>
-            ) : null}
-
             {/* Login Button */}
-            <TouchableOpacity onPress={onLogin}>
-              <View className="bg-[#3B82F6] rounded-full py-4 items-center justify-center">
-                <Text className="text-white text-lg font-bold">Ingresar</Text>
-              </View>
+            <TouchableOpacity 
+              onPress={onLogin}
+              disabled={loading}
+              className={`bg-blue-600 rounded-full py-4 items-center justify-center flex-row shadow-lg shadow-blue-500/30 mb-8 ${loading ? 'opacity-70' : ''}`}
+            >
+              {loading && <ActivityIndicator color="#FFFFFF" className="mr-2" />}
+              <Text className="text-white text-[16px] font-bold tracking-wide">
+                {loading ? 'Ingresando...' : 'Ingresar'}
+              </Text>
             </TouchableOpacity>
 
-            {/* Forgot Password */}
-            <TouchableOpacity>
-              <View className="mt-8 items-center">
-                <Text className="text-gray-400 text-sm font-medium">Olvidé mi contraseña</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+            {/* Navegar a Registro con expo-router Link */}
+            <View className="flex-row justify-center pb-2">
+              <Text className="text-gray-400 text-sm">¿No tienes cuenta? </Text>
+              <Link href="/(auth)/register" asChild>
+                <TouchableOpacity disabled={loading}>
+                  <Text className="text-blue-500 text-sm font-bold">Regístrate</Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
 
-          {/* Footer */}
-          <View className="mt-12 items-center">
-            <Text className="text-gray-500 text-sm">
-              ¿No tiene una cuenta corporativa?{' '}
-              <Text className="text-[#3B82F6] font-semibold">Contacte a soporte</Text>
-            </Text>
           </View>
 
           {/* Bottom Icons (Decorative) */}
-          <View className="flex-row justify-center space-x-12 mt-10">
-            <Ionicons name="shield-checkmark-outline" size={20} color="#333333" />
-            <Ionicons name="checkmark-circle-outline" size={20} color="#333333" />
-            <Ionicons name="globe-outline" size={20} color="#333333" />
+          <View className="flex-row justify-center gap-12 mt-auto mb-10 opacity-30">
+            <Ionicons name="shield-checkmark" size={20} color="#FFFFFF" />
+            <Ionicons name="finger-print" size={20} color="#FFFFFF" />
+            <Ionicons name="globe" size={20} color="#FFFFFF" />
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

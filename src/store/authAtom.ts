@@ -11,6 +11,7 @@ export interface User {
   hasCompletedProfile: boolean;
   dni?: string;
   direccion?: string;
+  celular?: string;
 }
 
 export interface AuthState {
