@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { Camera } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Alert, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateUserProfile } from '../../services/authService';
+import { updateKYCProfile } from '../../services/profileService';
+import { uploadDocumentImage } from '../../services/storageService';
 import { authAtom } from '../../store/authAtom';
 
 export default function CompleteProfileScreen() {
@@ -14,17 +15,19 @@ export default function CompleteProfileScreen() {
   const [auth, setAuth] = useAtom(authAtom);
 
   const [dni, setDni] = useState('');
-  const [direccion, setDireccion] = useState('');
   const [celular, setCelular] = useState('');
+  const [direccion, setDireccion] = useState('');
   const [dniFront, setDniFront] = useState<string | null>(null);
-  const [dniBack, setDniBack] = useState<string | null>(null);
+  
+  // UX Loading Blindaje
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState('');
 
   /**
    * Gestiona el acceso y la carga de imágenes usando expo-image-picker.
    * Maneja permisos rigurosos antes de permitir seleccionar las fotos.
    */
-  const pickImage = async (side: 'front' | 'back') => {
+  const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (permissionResult.granted === false) {
@@ -33,54 +36,64 @@ export default function CompleteProfileScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 0.7,
     });
 
     if (!result.canceled) {
-      if (side === 'front') {
-        setDniFront(result.assets[0].uri);
-      } else {
-        setDniBack(result.assets[0].uri);
-      }
+      setDniFront(result.assets[0].uri);
     }
   };
 
-  // Validar si el DNI tiene entre 8 y 11 dígitos, la dirección está, celular tiene al menos 9 caracteres y las imágenes subidas
-  const isFormValid = dni.length >= 8 && direccion.trim().length > 0 && celular.trim().length >= 9 && dniFront !== null && dniBack !== null;
+  // Validar si el DNI tiene entre 8 y 11 dígitos, celular tiene al menos 9 caracteres, direccion no esta vacia y la imagen está subida
+  const isFormValid = dni.length >= 8 && celular.trim().length >= 9 && direccion.trim().length > 0 && dniFront !== null;
 
   /**
-   * Finaliza el flujo KYC actualizando el perfil en Supabase
-   * y delegando el acceso al dashboard a Jotai y _layout.tsx
+   * Finaliza el flujo KYC subiendo la imagen y actualizando el perfil en Supabase
    */
   const onFinish = async () => {
     if (!auth.user || !isFormValid) return;
 
     try {
       setLoading(true);
-      await updateUserProfile(auth.user.id, dni, direccion, celular);
+      
+      // 1. Subir la foto al storage
+      setLoadingText('Subiendo documento de forma segura...');
+      const fotoUrl = await uploadDocumentImage(auth.user.id, dniFront!);
 
-      setAuth((prev) => ({
-        ...prev,
-        user: {
-          ...prev.user!,
-          hasCompletedProfile: true,
-          dni,
-          direccion,
-          celular,
-        }
-      }));
+      // 2. Actualizar la base de datos
+      setLoadingText('Verificando perfil...');
+      await updateKYCProfile(auth.user.id, dni, celular, direccion, fotoUrl);
 
+      // 3. Actualizar el estado global en tiempo real
+      setAuth((prev) => {
+        if (!prev.user) return prev;
+        return {
+          ...prev,
+          user: {
+            ...prev.user,
+            hasCompletedProfile: true,
+            verificacion_status: 'pendiente',
+            dni,
+            celular,
+            direccion,
+            foto_dni_url: fotoUrl,
+          }
+        };
+      });
+
+      // El layout root lo capturará automáticamente, o lo empujamos
       router.replace('/(private)/dashboard');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo guardar la información');
     } finally {
       setLoading(false);
+      setLoadingText('');
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#131517' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
@@ -91,119 +104,125 @@ export default function CompleteProfileScreen() {
             <View className="flex-1 px-6 pt-2">
 
               {/* Header */}
-              <View className="flex-row items-center justify-between mb-16 mt-4">
-                <TouchableOpacity onPress={() => router.canGoBack() && router.back()} className="p-2 -ml-2">
-                  <Ionicons name="arrow-back" size={24} color="#4A90E2" />
+              <View className="flex-row items-center justify-between mb-10 mt-4">
+                <TouchableOpacity onPress={() => router.canGoBack() && router.back()} className="p-2 -ml-2" disabled={loading}>
+                  <Ionicons name="arrow-back" size={24} color={loading ? '#333' : '#4A90E2'} />
                 </TouchableOpacity>
-                <Text className="text-white text-lg font-bold tracking-wide">QhatuFy</Text>
+                <Text className="text-white text-lg font-bold tracking-wide">KYC</Text>
                 <View className="w-10" />
               </View>
 
               {/* Titles */}
-              <View className="items-center mb-10">
-                <Text className="text-white text-[52px] font-extrabold text-center leading-[56px] mb-4 tracking-tight">
-                  Ya casi{'\n'}terminamos
+              <View className="items-center mb-8">
+                <Text className="text-white text-3xl font-extrabold text-center mb-3 tracking-tight">
+                  Verificación de Identidad
                 </Text>
-                <Text className="text-[#9CA3AF] text-[15px] text-center px-4 leading-6">
-                  Necesitamos estos datos para validar tus futuros contratos.
+                <Text className="text-gray-400 text-sm text-center px-4 leading-5">
+                  Por seguridad, requerimos validar tu identidad antes de operar.
                 </Text>
               </View>
 
-              {/* Form */}
-              <View className="mt-6">
+              {/* Form - Shadcn/NativeWind Aesthetics */}
+              <View className="mt-4">
 
-                {/* DNI / RUC Input */}
-                <View className="flex-row items-center bg-[#1D1D1F] border-[0.5px] border-white/5 rounded-3xl px-5 h-[62px] mb-4">
-                  <Ionicons name="document-text" size={20} color="#6B7280" />
-                  <TextInput
-                    style={{ color: 'white', fontSize: 16 }}
-                    className="flex-1 ml-4"
-                    placeholder="DNI / RUC"
-                    placeholderTextColor="#6B7280"
-                    keyboardType="numeric"
-                    maxLength={11}
-                    value={dni}
-                    onChangeText={(text) => {
-                      const numericText = text.replace(/[^0-9]/g, '');
-                      setDni(numericText.slice(0, 11));
-                    }}
-                  />
+                <View className="mb-4">
+                  <Text className="text-white/60 text-[11px] font-bold mb-2 uppercase tracking-widest ml-1">
+                    DNI / RUC
+                  </Text>
+                  <View className="flex-row items-center bg-[#1C1C1E] rounded-2xl h-14 px-4 border border-white/10">
+                    <Ionicons name="card" size={18} color="#6B7280" />
+                    <TextInput
+                      style={{ color: 'white', fontSize: 15 }}
+                      className="flex-1 ml-3"
+                      placeholder="Escribe tu número de documento"
+                      placeholderTextColor="#6B7280"
+                      keyboardType="numeric"
+                      maxLength={11}
+                      value={dni}
+                      editable={!loading}
+                      onChangeText={(text) => {
+                        const numericText = text.replace(/[^0-9]/g, '');
+                        setDni(numericText.slice(0, 11));
+                      }}
+                    />
+                  </View>
                 </View>
 
-                {/* Dirección Input */}
-                <View className="flex-row items-center bg-[#1D1D1F] border-[0.5px] border-white/5 rounded-3xl px-5 h-[62px] mb-4">
-                  <Ionicons name="map" size={20} color="#6B7280" />
-                  <TextInput
-                    style={{ color: 'white', fontSize: 16 }}
-                    className="flex-1 ml-4"
-                    placeholder="Dirección Fiscal"
-                    placeholderTextColor="#6B7280"
-                    value={direccion}
-                    onChangeText={setDireccion}
-                  />
+                <View className="mb-6">
+                  <Text className="text-white/60 text-[11px] font-bold mb-2 uppercase tracking-widest ml-1">
+                    Teléfono Celular
+                  </Text>
+                  <View className="flex-row items-center bg-[#1C1C1E] rounded-2xl h-14 px-4 border border-white/10">
+                    <Ionicons name="call" size={18} color="#6B7280" />
+                    <TextInput
+                      style={{ color: 'white', fontSize: 15 }}
+                      className="flex-1 ml-3"
+                      placeholder="Ej. 987654321"
+                      placeholderTextColor="#6B7280"
+                      keyboardType="phone-pad"
+                      value={celular}
+                      editable={!loading}
+                      onChangeText={setCelular}
+                    />
+                  </View>
                 </View>
 
-                {/* Celular Input */}
-                <View className="flex-row items-center bg-[#1D1D1F] border-[0.5px] border-white/5 rounded-3xl px-5 h-[62px]">
-                  <Ionicons name="call" size={20} color="#6B7280" />
-                  <TextInput
-                    style={{ color: 'white', fontSize: 16 }}
-                    className="flex-1 ml-4"
-                    placeholder="Celular"
-                    placeholderTextColor="#6B7280"
-                    keyboardType="phone-pad"
-                    value={celular}
-                    onChangeText={setCelular}
-                  />
+                {/* Input Dirección Física */}
+                <View className="mb-6">
+                  <Text className="text-white/60 text-[11px] font-bold mb-2 uppercase tracking-widest ml-1">
+                    Dirección Física
+                  </Text>
+                  <View className="flex-row items-center bg-[#1C1C1E] rounded-2xl h-14 px-4 border border-white/10">
+                    <Ionicons name="location" size={18} color="#6B7280" />
+                    <TextInput
+                      style={{ color: 'white', fontSize: 15 }}
+                      className="flex-1 ml-3"
+                      placeholder="Ej. Av. Principal 123, Stand 45"
+                      placeholderTextColor="#6B7280"
+                      value={direccion}
+                      editable={!loading}
+                      onChangeText={setDireccion}
+                    />
+                  </View>
                 </View>
 
                 {/* Documento de Identidad KYC */}
-                <Text className="text-white/80 font-semibold mt-6 mb-3 px-1">Documento de Identidad</Text>
+                <Text className="text-white/60 text-[11px] font-bold mb-2 uppercase tracking-widest ml-1">
+                  Fotografía del Documento
+                </Text>
 
-                <View className="flex-row justify-between">
-                  {/* Cara Frontal */}
-                  <Pressable
-                    className="border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-4 items-center justify-center h-32 flex-1 mx-1 active:bg-white/5"
-                    onPress={() => pickImage('front')}
-                  >
-                    {dniFront ? (
-                      <Image source={{ uri: dniFront }} className="w-full h-full rounded-xl object-cover" />
-                    ) : (
-                      <>
-                        <Camera color="#6B7280" size={24} />
-                        <Text className="text-[#6B7280] text-xs mt-2 font-medium">Subir frente</Text>
-                      </>
-                    )}
-                  </Pressable>
-
-                  {/* Cara Posterior */}
-                  <Pressable
-                    className="border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-4 items-center justify-center h-32 flex-1 mx-1 active:bg-white/5"
-                    onPress={() => pickImage('back')}
-                  >
-                    {dniBack ? (
-                      <Image source={{ uri: dniBack }} className="w-full h-full rounded-xl object-cover" />
-                    ) : (
-                      <>
-                        <Camera color="#6B7280" size={24} />
-                        <Text className="text-[#6B7280] text-xs mt-2 font-medium">Subir reverso</Text>
-                      </>
-                    )}
-                  </Pressable>
-                </View>
+                <Pressable
+                  className="border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-4 items-center justify-center h-48 active:bg-white/5"
+                  onPress={pickImage}
+                  disabled={loading}
+                >
+                  {dniFront ? (
+                    <Image source={{ uri: dniFront }} className="w-full h-full rounded-xl object-cover" />
+                  ) : (
+                    <View className="items-center">
+                      <View className="bg-blue-500/20 p-4 rounded-full mb-3">
+                        <Camera color="#5C8FFB" size={32} />
+                      </View>
+                      <Text className="text-white font-bold mb-1">Presiona para capturar</Text>
+                      <Text className="text-gray-500 text-xs font-medium text-center px-4">
+                        Asegúrate de que la imagen sea legible y sin reflejos.
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
 
               </View>
 
               {/* Bottom actions */}
-              <View className="mt-[50px] items-center">
+              <View className="mt-10 mb-8 items-center">
                 <TouchableOpacity
                   onPress={onFinish}
-                  className="py-4 px-8"
                   disabled={!isFormValid || loading}
-                  style={{ opacity: isFormValid && !loading ? 1 : 0.4 }}
+                  className={`w-full bg-blue-600 rounded-full py-4 items-center justify-center shadow-lg shadow-blue-500/30 flex-row ${(isFormValid && !loading) ? '' : 'opacity-50'}`}
                 >
-                  <Text className="text-[#0957D0] text-[15px] font-bold">
-                    {loading ? 'Procesando...' : 'Finalizar y empezar'}
+                  {loading && <ActivityIndicator color="#ffffff" className="mr-3" />}
+                  <Text className="text-white text-[15px] font-bold tracking-wide">
+                    {loading ? loadingText : 'Finalizar Verificación'}
                   </Text>
                 </TouchableOpacity>
               </View>

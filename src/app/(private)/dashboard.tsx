@@ -16,13 +16,14 @@ import { PaymentRequirement } from '../../types/payment';
 export default function DashboardScreen() {
   const router = useRouter();
   const [auth, setAuth] = useAtom(authAtom);
-  const userName = auth.user?.name || 'Alejandro';
+  const userName = auth.user?.nombre || 'Alejandro';
 
   const handleLogout = () => {
     setAuth({
       user: null,
+      session: null,
       isAuthenticated: false,
-      token: null,
+      isLoading: false
     });
   };
 
@@ -91,7 +92,7 @@ export default function DashboardScreen() {
         </View>
 
         {/* Warning: Completa tu Perfil */}
-        {!auth.user?.hasCompletedProfile && (
+        {!auth.user?.hasCompletedProfile && auth.user?.verificacion_status !== 'rechazado' && (
           <View className="bg-[#1C130D] rounded-[20px] mb-8 border-l-4 border-[#F97316] py-4 px-4 shadow-sm">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center flex-1">
@@ -111,6 +112,31 @@ export default function DashboardScreen() {
               <View className="w-24 h-1 bg-[#F97316] rounded-full" />
               <View className="w-12 h-1 bg-[#3A2415] rounded-full ml-1" />
             </View>
+          </View>
+        )}
+
+        {/* Warning: Documentos Rechazados */}
+        {auth.user?.verificacion_status === 'rechazado' && (
+          <View className="bg-[#2A1111] rounded-[20px] mb-8 border-l-4 border-[#EF4444] py-5 px-5 shadow-sm">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center flex-1">
+                <View className="bg-[#EF4444] w-5 h-5 rounded-full items-center justify-center mr-3">
+                  <Ionicons name="close" size={14} color="#FFF" />
+                </View>
+                <Text className="text-white text-[13px] font-bold flex-1 pr-2">
+                  Tus documentos fueron rechazados.
+                </Text>
+              </View>
+            </View>
+            <Text className="text-gray-300 text-xs mb-4 ml-8 leading-5">
+              La verificación de identidad ha fallado. Por favor, sube un documento válido y legible para habilitar tu cuenta.
+            </Text>
+            <TouchableOpacity 
+              onPress={() => router.replace('/(auth)/complete-profile')}
+              className="bg-[#EF4444] rounded-full py-3 items-center justify-center shadow-lg shadow-red-500/30 ml-8"
+            >
+              <Text className="text-white font-bold text-xs tracking-wide">SUBIR DOCUMENTO DE NUEVO</Text>
+            </TouchableOpacity>
           </View>
         )}
 

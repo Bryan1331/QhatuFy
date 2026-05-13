@@ -78,11 +78,12 @@ export default function RegisterScreen() {
         isAuthenticated: true,
         user: { 
           id: user.id, 
-          name: name, 
+          nombre: name, 
           email: email, 
           hasCompletedProfile: false // Obliga al usuario a pasar por el flujo KYC
-        },
-        token: null, // El token real lo manejaríamos con onAuthStateChange en una etapa posterior
+        } as any,
+        session: null,
+        isLoading: false,
       });
     } catch (err: any) {
       setError(err.message);

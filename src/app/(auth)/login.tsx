@@ -49,19 +49,14 @@ export default function LoginScreen() {
 
     try {
       setLoading(true); // Bloquea la UI para evitar doble envío
-      const user = await signInUser(email, password);
+      const { session, user: profile } = await signInUser(email, password);
       
       // Actualiza el estado global (Jotai) permitiendo que _layout.tsx decida el enrutamiento
       setAuth({
         isAuthenticated: true,
-        user: {
-          id: user.id,
-          name: user.user_metadata?.full_name || 'Usuario',
-          email: user.email || email,
-          // Dependiendo del KYC, esto forzará o evitará pasar por /complete-profile
-          hasCompletedProfile: user.user_metadata?.hasCompletedProfile || false,
-        },
-        token: null, // El token de sesión será manejado luego por Supabase Auth
+        user: profile as any,
+        session,
+        isLoading: false,
       });
     } catch (err: any) {
       setErrorMsg(err.message);

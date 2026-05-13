@@ -54,7 +54,13 @@ export const signInUser = async (email: string, password: string) => {
       throw new Error('Error al iniciar sesión.');
     }
 
-    return data.user;
+    // ESPERAR HIDRATACIÓN
+    const profile = await getExtendedProfile(data.user.id, email);
+    if (!profile) {
+      throw new Error('No se pudo obtener el perfil del usuario.');
+    }
+
+    return { session: data.session, user: profile };
   } catch (err: any) {
     throw new Error(err.message || 'Error en el inicio de sesión');
   }
@@ -82,5 +88,42 @@ export const updateUserProfile = async (userId: string, dni: string, direccion: 
     return true;
   } catch (err: any) {
     throw new Error(err.message || 'Error al actualizar el perfil');
+  }
+};
+
+/**
+ * Obtiene el perfil de un usuario desde la tabla 'perfiles' y mapea
+ * los datos de Supabase hacia el átomo (ej. has_completed_profile -> hasCompletedProfile).
+ */
+export const getExtendedProfile = async (userId: string, email: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('perfiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (!data) return null;
+
+    // Transformación clave: mapear has_completed_profile (DB) a hasCompletedProfile (Átomo)
+    return {
+      id: data.id,
+      nombre: data.nombre || null,
+      email: email, // Usar el email de auth
+      role: data.role || 'user',
+      verificacion_status: data.verificacion_status || 'pendiente',
+      hasCompletedProfile: data.has_completed_profile || false,
+      dni: data.dni,
+      direccion: data.direccion,
+      celular: data.celular,
+      foto_dni_url: data.foto_dni_url,
+    };
+  } catch (err: any) {
+    console.error('Error al obtener perfil extendido:', err);
+    throw err; // Propagar error para forzar signOut en el layout
   }
 };

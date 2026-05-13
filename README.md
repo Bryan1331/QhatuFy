@@ -1,63 +1,149 @@
 # 🏢 QhatuFy
 
-> **Una app premium de gestión de alquileres comerciales potenciada por Inteligencia Artificial.**
+> Aplicación móvil para la gestión de alquileres comerciales.
 
-QhatuFy es una plataforma vanguardista desarrollada para priorizar una experiencia de usuario de élite fusionada con herramientas automatizadas para la administración y gestión operativa del patrimonio en arrendamientos comerciales.
-
----
-
-## 📈 Estado del Proyecto
-
-Actualmente, el proyecto se encuentra en fases intensas de desarrollo. Hoy tenemos consolidada con éxito la primera capa estructural de la aplicación:
-
-- ✅ **Arquitectura Base**: Arquitectura reactiva encapsulada y optimizada para producción móvil.
-- ✅ **Sistema Autónomo de Autenticación**: El flujo completo de *Welcome*, *Login* y *Register* está operativo.
-- ✅ **AuthGuard Riguroso**: Enrutador guardián (en `_layout.tsx`) diseñado inteligentemente que aísla de inmediato las áreas públicas de las zonas de gestión operativas (`Dashboard`), evitando parpadeos de transiciones (Double-routing Jump).
+QhatuFy es una app que permite a los inquilinos gestionar sus contratos, pagos y documentos de identidad (KYC), y a los administradores verificar y aprobar solicitudes desde un panel dedicado.
 
 ---
 
-## 💻 Tech Stack
+## 📋 ¿Qué puede hacer la app?
 
-- **App Framework**: [Expo](https://expo.dev/) y [React Native](https://reactnative.dev/).
-- **Lenguaje Transversal**: [TypeScript](https://www.typescriptlang.org/) (Tipado estricto para escalar seguro).
-- **Estilos Dinámicos**: [NativeWind v4](https://www.nativewind.dev/) (Tailwind CSS empaquetado para render nativo).
-- **Control de Estado Atómico**: [Jotai](https://jotai.org/) (Gestor de sesiones primitivo sumamente performante).
-- **Módulos IA**: Arquitectura pre-construida para la próxima integración cerebral empleando **Google Gemini API**.
+### Para el Inquilino (usuario normal):
+- Registrarse e iniciar sesión.
+- Completar su perfil subiendo DNI, dirección y celular (proceso KYC).
+- Ver su dashboard con contratos, pagos pendientes y accesos rápidos.
+- Cerrar sesión de forma segura.
+
+### Para el Administrador:
+- Ver cuántas solicitudes de verificación hay pendientes.
+- Revisar los documentos de cada usuario (foto del DNI).
+- Aprobar o rechazar solicitudes.
+- Cerrar sesión.
 
 ---
 
-## 📂 Estructura del Código (\`src/\`)
+## 🛠️ Tecnologías Utilizadas
 
-Todo nuestro código vivo habita seguro dentro de `src/`, manteniendo organizada la escalabilidad del patrón jerárquico:
+| Tecnología | ¿Para qué se usa? |
+|---|---|
+| [Expo](https://expo.dev/) + [React Native](https://reactnative.dev/) | Construir la app para Android e iOS con un solo código. |
+| [TypeScript](https://www.typescriptlang.org/) | Escribir código con menos errores gracias al tipado. |
+| [Expo Router](https://docs.expo.dev/router/introduction/) | Navegación entre pantallas basada en carpetas. |
+| [Jotai](https://jotai.org/) | Estado global (memoria compartida entre pantallas). |
+| [Supabase](https://supabase.com/) | Base de datos, autenticación y almacenamiento de archivos en la nube. |
+| [NativeWind v4](https://www.nativewind.dev/) | Estilos con clases de Tailwind CSS en React Native. |
 
-```text
-QhatuFy/
-└── src/
-    ├── app/          # (Routing) Enrutamiento dinámico tipo Expo Router. Alberga los Layouts y pantallas protegidas vs. públicas.
-    ├── components/   # (UI Shell) Componentes visuales agnósticos como botones estilizados, inputs o widgets abstractos.
-    └── store/        # (Global State) Átomos de Jotai (ej. `authAtom.ts`) de control central síncrono.
+---
+
+## 📂 Estructura del Proyecto
+
+```
+src/
+├── app/                        ← Pantallas de la aplicación
+│   ├── _layout.tsx             ← Guardián de rutas (AuthGuard)
+│   ├── index.tsx               ← Pantalla de carga inicial
+│   ├── welcome.tsx             ← Pantalla de bienvenida
+│   ├── (auth)/                 ← Pantallas públicas
+│   │   ├── login.tsx
+│   │   ├── register.tsx
+│   │   └── complete-profile.tsx
+│   ├── (private)/              ← Pantallas del inquilino
+│   │   └── dashboard.tsx
+│   └── (admin)/                ← Pantallas del administrador
+│       ├── index.tsx
+│       └── verify-documents.tsx
+│
+├── components/                 ← Componentes reutilizables
+│   ├── admin/
+│   │   └── SolicitudCard.tsx
+│   └── dashboard/
+│       └── PaymentCard.tsx
+│
+├── services/                   ← Comunicación con Supabase
+│   ├── supabase.ts
+│   ├── authService.ts
+│   ├── profileService.ts
+│   ├── storageService.ts
+│   └── adminService.ts
+│
+├── store/                      ← Estado global (Jotai)
+│   ├── authAtom.ts
+│   └── adminAtom.ts
+│
+└── types/                      ← Definiciones de tipos
+    └── payment.ts
 ```
 
 ---
 
-## 🛠️ Paso a Paso (Guía Rápida)
+## 🚀 ¿Cómo levantar el proyecto?
 
-Levantar a producción inicial el entorno es cuestión de instantes:
+### Requisitos previos:
+- Tener instalado [Node.js](https://nodejs.org/) (versión 18 o superior).
+- Tener la app **Expo Go** en tu celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779)).
 
-1. **Instalación de paquetes de nodo:**
-   ```bash
-   npm install
-   ```
+### Paso 1: Instalar dependencias
+```bash
+npm install
+```
 
-2. **Correr e Iniciar a empaquetar Metros:**
-   ```bash
-   npx expo start
-   ```
+### Paso 2: Configurar variables de entorno
+Crea un archivo `.env` en la raíz del proyecto con tus credenciales de Supabase:
+```
+EXPO_PUBLIC_SUPABASE_URL=tu_url_de_supabase
+EXPO_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima
+```
 
-*(Teclas útiles durante el servidor activo)*
-- Preciona `a` para abrir simulador de Android.
-- Presiona `i` para abrir simulador de iOS.
-- Presiona `w` para abrir simulador en Web.
+### Paso 3: Iniciar la app
+```bash
+npx expo start
+```
+
+### Paso 4: Abrir en tu dispositivo
+Una vez que aparezca el código QR en la terminal:
+- **Android:** Abre Expo Go y escanea el QR.
+- **iPhone:** Escanea el QR con la cámara del celular.
+- **Emulador:** Presiona `a` (Android) o `i` (iOS) en la terminal.
+
 ---
 
-**© 2026 QhatuFy Enterprise.**
+## 🔄 Flujo de la Aplicación
+
+```
+Usuario abre la app
+      │
+      ▼
+  ¿Tiene sesión?
+      │
+  NO ─┤
+      ▼
+  /welcome → /login o /register
+      │
+      ▼
+  Inicia sesión
+      │
+  SÍ ─┤
+      ▼
+  ¿Qué rol tiene?
+      │
+  usuario ──→ /(private)/dashboard
+  admin   ──→ /(admin)
+```
+
+---
+
+## 📖 Documentación Adicional
+
+Para entender el código a profundidad, consulta la **[Guía Técnica](./GUIA_TECNICA.md)**, donde encontrarás:
+- Glosario de todos los términos técnicos.
+- Ejemplos de cómo crear pantallas, botones y navegación.
+- Explicación detallada de cada carpeta y archivo.
+- Reglas importantes del proyecto.
+
+---
+
+## 👥 Equipo
+
+Desarrollado por el equipo de QhatuFy.
+
+**© 2026 QhatuFy**

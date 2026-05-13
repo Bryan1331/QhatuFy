@@ -1,33 +1,38 @@
 import { atom } from 'jotai';
 
 /**
- * Interfaz fundamental que describe los atributos de un Usuario del ecosistema QhatuFy.
+ * Representa el perfil del usuario (ya sea inquilino o administrador).
+ * Se sincroniza con la base de datos (tabla 'perfiles').
  */
-
-export interface User {
+export interface UserProfile {
   id: string;
-  name: string;
+  nombre: string | null;
   email: string;
+  role: 'user' | 'admin';
+  verificacion_status: 'pendiente' | 'aprobado' | 'rechazado';
   hasCompletedProfile: boolean;
   dni?: string;
   direccion?: string;
   celular?: string;
-}
-
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  token: string | null;
+  foto_dni_url?: string;
 }
 
 /**
- * authAtom
- * --------
- * Átomo en formato Singleton inyectado mediante Jotai para manejar el estado
- * de la sesión actual de manera síncrona.
+ * Estado global de autenticación de la aplicación.
+ */
+export interface AuthState {
+  user: UserProfile | null;
+  session: any | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+/**
+ * Átomo global que mantiene el estado de la sesión activa y el perfil del usuario.
  */
 export const authAtom = atom<AuthState>({
   user: null,
+  session: null,
+  isLoading: true,
   isAuthenticated: false,
-  token: null,
 });

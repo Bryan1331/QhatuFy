@@ -1,0 +1,130 @@
+import { Ionicons } from '@expo/vector-icons';
+import { Href, useRouter } from 'expo-router';
+import { useAtom } from 'jotai';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { getDashboardStats } from '../../services/adminService';
+import { supabase } from '../../services/supabase';
+import { adminStatsAtom } from '../../store/adminAtom';
+
+/**
+ * AdminDashboard
+ * --------------
+ * Pantalla principal del panel de administración de QhatuFy.
+ * Aquí el administrador puede ver estadísticas generales y acceder
+ * a herramientas de gestión como la verificación de documentos (KYC).
+ */
+export default function AdminDashboard() {
+  const router = useRouter();
+  
+  // Estado global para las estadísticas del dashboard
+  const [stats, setStats] = useAtom(adminStatsAtom);
+  
+  // Estado local para manejar la carga inicial de datos
+  const [isLoading, setIsLoading] = useState(true);
+
+  /**
+   * Cierra la sesión del administrador de forma segura
+   * y redirige a la pantalla de inicio de sesión.
+   */
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.replace('/(auth)/login' as Href);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  /**
+   * Efecto para cargar las estadísticas al montar el componente.
+   * Llama al servicio de administración y actualiza el estado global.
+   */
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Error cargando stats:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadStats();
+  }, [setStats]);
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0A0A0A' }} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+
+        {/* --- CABECERA (Title Area) --- */}
+        {/* Muestra el título principal, el botón de cierre de sesión y el estado del servidor/rol */}
+        <View className="px-6 mt-6 mb-8">
+          <View className="flex-row items-center justify-between mb-1">
+            <Text className="text-white text-3xl font-bold tracking-tight">ADMIN QHATUFY</Text>
+            
+            {/* Botón para cerrar sesión */}
+            <TouchableOpacity className="p-2 rounded-full bg-red-500/10" onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+          <Text className="text-gray-400 text-sm mb-6">Panel de Control Principal</Text>
+
+          {/* Indicadores de estado (Servidor y Rol) */}
+          <View className="flex-row gap-3">
+            <View className="bg-[#1C1C1E] flex-row items-center px-4 py-2 rounded-full border border-white/5">
+              <View className="w-1.5 h-1.5 bg-[#5C8FFB] rounded-full mr-2" />
+              <Text className="text-white text-xs font-medium">Servidor: En Línea</Text>
+            </View>
+            <View className="bg-[#1C1C1E] flex-row items-center px-4 py-2 rounded-full border border-white/5">
+              <Ionicons name="shield-checkmark-outline" size={12} color="#5C8FFB" className="mr-2" />
+              <Text className="text-white text-xs font-medium ml-1.5">Rol: Administrador</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* --- TARJETA HERO: KYC HUB (Verificación de Documentos) --- */}
+        {/* Tarjeta principal que destaca la sección de verificación de solicitudes pendientes */}
+        <View className="px-6">
+          <View className="bg-[#151517] rounded-[32px] p-7 border border-white/5">
+            {/* Etiqueta superior */}
+            <View className="bg-[#B45309]/20 self-start flex-row items-center px-3 py-1.5 rounded-full border border-[#B45309]/30 mb-6">
+              <Ionicons name="shield-checkmark" size={10} color="#F97316" />
+              <Text className="text-[#F97316] text-[10px] font-bold tracking-widest ml-1.5">KYC HUB</Text>
+            </View>
+
+            {/* Título de la tarjeta */}
+            <Text className="text-white text-3xl font-bold leading-tight mb-5 tracking-tight">Verificación de Documentos</Text>
+
+            {/* Contador de solicitudes pendientes */}
+            <View className="flex-row items-center mb-8">
+              <Ionicons name="document-text-outline" size={20} color="#F97316" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#F97316" className="ml-3" />
+              ) : (
+                <Text className="text-[#F97316] text-[15px] font-bold ml-2.5">{stats.pendingKYC} Solicitudes Pendientes</Text>
+              )}
+            </View>
+
+            {/* Botón de acción principal para ir a la pantalla de verificación */}
+            <TouchableOpacity
+              onPress={() => router.push('/(admin)/verify-documents' as Href)}
+              className="bg-[#5C8FFB] rounded-full py-3.5 px-6 self-start flex-row items-center"
+            >
+              <Text className="text-[#0A0A0A] font-bold text-[15px] mr-2">
+                Verificar
+              </Text>
+              <Ionicons name="arrow-forward" size={18} color="#0A0A0A" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
