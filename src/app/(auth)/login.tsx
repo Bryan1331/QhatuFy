@@ -2,10 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useSetAtom } from 'jotai';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { authAtom } from '../../store/authAtom';
 import { signInUser } from '../../services/authService';
+import { authAtom } from '../../store/authAtom';
 
 /**
  * LoginScreen
@@ -16,7 +16,7 @@ import { signInUser } from '../../services/authService';
 export default function LoginScreen() {
   const router = useRouter();
   const setAuth = useSetAtom(authAtom);
-  
+
   // Estado de credenciales
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,7 +50,7 @@ export default function LoginScreen() {
     try {
       setLoading(true); // Bloquea la UI para evitar doble envío
       const { session, user: profile } = await signInUser(email, password);
-      
+
       // Actualiza el estado global (Jotai) permitiendo que _layout.tsx decida el enrutamiento
       setAuth({
         isAuthenticated: true,
@@ -72,7 +72,7 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-          
+
           {/* Header & Back */}
           <View className="px-5 py-5 mt-2 flex-row items-center">
             {router.canGoBack() && (
@@ -101,7 +101,7 @@ export default function LoginScreen() {
 
           {/* Central Card */}
           <View className="p-8 mx-2 flex-1 mb-8">
-            
+
             {/* Error Message */}
             {errorMsg ? (
               <Text className="text-red-400 mb-6 font-medium text-center">
@@ -168,7 +168,7 @@ export default function LoginScreen() {
             </View>
 
             {/* Login Button */}
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={onLogin}
               disabled={loading}
               className={`bg-blue-600 rounded-full py-4 items-center justify-center flex-row shadow-lg shadow-blue-500/30 mb-8 ${loading ? 'opacity-70' : ''}`}

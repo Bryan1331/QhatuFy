@@ -3,9 +3,12 @@ import { useRouter } from 'expo-router';
 import { useAtom } from 'jotai';
 import { Image, Platform, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect } from 'react';
 import { PaymentCard } from '../../components/dashboard/PaymentCard';
 import { authAtom } from '../../store/authAtom';
 import { PaymentRequirement } from '../../types/payment';
+import { initLocalDb } from '../../services/localDb';
+import { syncTenantData, getLocalPayments } from '../../services/syncService';
 
 /**
  * DashboardScreen
@@ -27,32 +30,29 @@ export default function DashboardScreen() {
     });
   };
 
-  const mockPayments: PaymentRequirement[] = [
-    {
-      id: '1',
-      contractName: 'Local Comercial - Sector A',
-      amount: 1250,
-      currency: 'PEN',
-      dueDate: '2026-05-31T00:00:00.000Z',
-      isPaid: false,
-    },
-    {
-      id: '2',
-      contractName: 'Stand 15 - Zona Tecnológica',
-      amount: 800,
-      currency: 'PEN',
-      dueDate: '2026-05-12T00:00:00.000Z',
-      isPaid: false,
-    },
-    {
-      id: '3',
-      contractName: 'Almacén B',
-      amount: 400,
-      currency: 'PEN',
-      dueDate: '2026-04-15T00:00:00.000Z',
-      isPaid: true,
-    }
-  ];
+  const [payments, setPayments] = useState<PaymentRequirement[]>([]);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      if (!auth.user?.id) return;
+      
+      // 1. Inicializar base de datos local SQLite
+      await initLocalDb();
+      
+      // 2. Cargar datos instantáneos desde la caché local SQLite
+      const cachedPayments = await getLocalPayments();
+      setPayments(cachedPayments);
+      
+      // 3. Sincronizar silenciosamente de Supabase en background
+      const syncSuccess = await syncTenantData(auth.user.id);
+      if (syncSuccess) {
+        // Si hubo datos nuevos, refrescar la pantalla con la verdad de la nube
+        const updatedPayments = await getLocalPayments();
+        setPayments(updatedPayments);
+      }
+    };
+    loadDashboardData();
+  }, [auth.user?.id]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D0D0D', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
@@ -142,7 +142,7 @@ export default function DashboardScreen() {
 
         {/* Card: Próximo Pago */}
         <View className="mb-8">
-          <PaymentCard payments={mockPayments} />
+          <PaymentCard payments={payments} />
         </View>
 
         {/* Sección: Gestión Rápida */}
@@ -226,11 +226,14 @@ export default function DashboardScreen() {
           <Text className="text-[#5C8FFB] text-[10px] font-semibold">Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity className="items-center flex-1 opacity-50">
+        <TouchableOpacity 
+          className="items-center flex-1"
+          onPress={() => router.push('/(private)/catalog' as any)}
+        >
           <View className="w-12 h-12 rounded-full items-center justify-center mb-1">
-            <Ionicons name="document-text-outline" size={22} color="#FFF" />
+            <Ionicons name="grid-outline" size={22} color="#FFF" />
           </View>
-          <Text className="text-white text-[10px] font-medium">Contratos</Text>
+          <Text className="text-white text-[10px] font-medium">Catálogo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity className="items-center flex-1 opacity-50">
