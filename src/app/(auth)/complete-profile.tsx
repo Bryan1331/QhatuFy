@@ -83,7 +83,7 @@ export default function CompleteProfileScreen() {
       });
 
       // El layout root lo capturará automáticamente, o lo empujamos
-      router.replace('/(private)/dashboard');
+      router.replace('/(private)');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo guardar la información');
     } finally {

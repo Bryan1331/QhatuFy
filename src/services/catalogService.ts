@@ -7,18 +7,17 @@ export interface LocalModel {
   imagen_url: string;
   precio: number;
   dimensiones: string;
+  descripcion?: string;
 }
 
 export const getAvailableLocales = async (): Promise<LocalModel[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('locales')
-      .select('id, nombre, ubicacion, imagen_url, precio, dimensiones')
-      .eq('disponible', true);
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error obteniendo locales:', error);
-    return [];
-  }
+  const { data, error } = await supabase.from('locales').select('*').eq('disponible', true);
+  if (error) { console.error(error); return []; }
+  return data || [];
+};
+
+export const getLocalById = async (id: string): Promise<LocalModel | null> => {
+  const { data, error } = await supabase.from('locales').select('*').eq('id', id).single();
+  if (error) { console.error(error); return null; }
+  return data;
 };

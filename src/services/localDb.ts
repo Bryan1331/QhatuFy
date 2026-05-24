@@ -6,19 +6,32 @@ export const getLocalDb = async () => {
 
 export const initLocalDb = async () => {
   const db = await getLocalDb();
+  
+  // 1. Apagar foráneas, destruir todo y limpiar el caché local
   await db.execAsync(`
+    PRAGMA foreign_keys = OFF;
+    DROP TABLE IF EXISTS pagos;
+    DROP TABLE IF EXISTS contratos;
+    DROP TABLE IF EXISTS locales;
+    DROP TABLE IF EXISTS citas;
     PRAGMA foreign_keys = ON;
+  `);
+
+  // 2. Recrear el esquema perfecto
+  await db.execAsync(`
     CREATE TABLE IF NOT EXISTS locales (
       id TEXT PRIMARY KEY,
       nombre TEXT NOT NULL,
       ubicacion TEXT,
-      imagen_url TEXT
+      imagen_url TEXT,
+      precio REAL
     );
     CREATE TABLE IF NOT EXISTS contratos (
-      id TEXT PRIMARY KEY,
+      id TEXT PRIMARY KEY NOT NULL,
       inquilino_id TEXT,
       local_id TEXT,
       estado TEXT,
+      documento_url TEXT,
       FOREIGN KEY (local_id) REFERENCES locales(id)
     );
     CREATE TABLE IF NOT EXISTS pagos (
@@ -29,6 +42,12 @@ export const initLocalDb = async () => {
       fecha_vencimiento TEXT NOT NULL,
       estado TEXT,
       FOREIGN KEY (contrato_id) REFERENCES contratos(id)
+    );
+    CREATE TABLE IF NOT EXISTS citas (
+      id TEXT PRIMARY KEY NOT NULL,
+      local_id TEXT NOT NULL,
+      fecha_hora TEXT NOT NULL,
+      estado TEXT DEFAULT 'PENDIENTE'
     );
   `);
 };

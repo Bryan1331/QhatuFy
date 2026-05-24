@@ -1,5 +1,5 @@
-import { supabase } from './supabase';
 import { getLocalDb } from './localDb';
+import { supabase } from './supabase';
 
 export const syncTenantData = async (userId: string) => {
   try {
@@ -13,6 +13,10 @@ export const syncTenantData = async (userId: string) => {
 
     if (errContratos || !contratos) throw errContratos;
 
+    // EL ORDEN ES CRÍTICO: Primero borramos hijos (pagos), luego padres (contratos)
+    await db.runAsync('DELETE FROM pagos');
+    await db.runAsync('DELETE FROM contratos');
+
     // Guardar Locales y Contratos localmente
     for (const con of contratos) {
       if (con.locales) {
@@ -22,13 +26,14 @@ export const syncTenantData = async (userId: string) => {
         );
       }
       await db.runAsync(
-        'INSERT OR REPLACE INTO contratos (id, inquilino_id, local_id, estado) VALUES (?, ?, ?, ?);',
-        [con.id, con.inquilino_id, con.local_id, con.estado]
+        'INSERT OR REPLACE INTO contratos (id, inquilino_id, local_id, estado, documento_url) VALUES (?, ?, ?, ?, ?);',
+        [con.id, con.inquilino_id, con.local_id, con.estado, con.documento_url]
       );
     }
 
-    // 2. Descargar Pagos vinculados a esos contratos
+    // 2. Descargar e Insertar nuevos Pagos
     const contratoIds = contratos.map(c => c.id);
+
     if (contratoIds.length > 0) {
       const { data: pagos, error: errPagos } = await supabase
         .from('pagos')
@@ -44,6 +49,29 @@ export const syncTenantData = async (userId: string) => {
         );
       }
     }
+
+    // Sincronizar Citas reales del usuario
+    const { data: citas, error: errCitas } = await supabase
+      .from('citas')
+      .select('*, locales(*)')
+      .eq('inquilino_id', userId);
+
+    if (!errCitas && citas) {
+      await db.runAsync('DELETE FROM citas');
+      for (const cita of citas) {
+        if (cita.locales) {
+          await db.runAsync(
+            'INSERT OR REPLACE INTO locales (id, nombre, ubicacion, imagen_url) VALUES (?, ?, ?, ?);',
+            [cita.locales.id, cita.locales.nombre, cita.locales.ubicacion, cita.locales.imagen_url]
+          );
+        }
+        await db.runAsync(
+          'INSERT OR REPLACE INTO citas (id, local_id, fecha_hora, estado) VALUES (?, ?, ?, ?);',
+          [cita.id, cita.local_id, cita.fecha_hora, cita.estado]
+        );
+      }
+    }
+
     return true;
   } catch (error) {
     console.error('Error en la sincronización Offline-First:', error);
@@ -61,7 +89,7 @@ export const getLocalPayments = async (): Promise<any[]> => {
     JOIN locales l ON c.local_id = l.id
     ORDER BY p.fecha_vencimiento ASC;
   `);
-  
+
   return rows.map((r: any) => ({
     id: r.id,
     contractName: r.local_nombre,
@@ -71,3 +99,34 @@ export const getLocalPayments = async (): Promise<any[]> => {
     isPaid: r.estado === 'pagado'
   }));
 };
+
+export const getLocalActiveContract = async () => {
+  const db = await getLocalDb();
+  const countResult = await db.getFirstAsync<{ total: number }>(
+    `SELECT COUNT(*) as total FROM contratos WHERE estado = 'activo';`
+  );
+
+  const activeContracts = await db.getAllAsync<any>(`
+    SELECT c.id, c.estado, c.documento_url, l.nombre, l.ubicacion, l.imagen_url 
+    FROM contratos c
+    JOIN locales l ON c.local_id = l.id
+    WHERE c.estado = 'activo'
+  `);
+
+  return {
+    activeCount: countResult?.total || 0,
+    contractData: activeContracts || [] // Ahora devuelve un Array
+  };
+};
+
+export const getLocalAppointments = async (): Promise<any[]> => {
+  const db = await getLocalDb();
+  const rows = await db.getAllAsync(`
+    SELECT c.*, l.nombre as local_nombre, l.imagen_url as local_imagen
+    FROM citas c
+    LEFT JOIN locales l ON c.local_id = l.id
+    ORDER BY c.fecha_hora ASC;
+  `);
+  return rows;
+};
+

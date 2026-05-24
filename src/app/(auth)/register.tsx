@@ -220,7 +220,13 @@ export default function RegisterScreen() {
                 {agreed && <Ionicons name="checkmark" size={14} color="#FFF" />}
               </TouchableOpacity>
               <Text className="text-gray-300 text-sm">
-                Acepto <Text className="text-blue-500">términos y condiciones</Text>
+                Acepto{' '}
+                <Text 
+                  className="text-blue-500 font-bold" 
+                  onPress={() => router.push('/(auth)/terms' as any)}
+                >
+                  términos y condiciones
+                </Text>
               </Text>
             </View>
 

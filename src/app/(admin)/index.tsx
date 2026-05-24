@@ -124,6 +124,63 @@ export default function AdminDashboard() {
           </View>
         </View>
 
+        {/* --- TARJETA: GESTIÓN DE LOCALES --- */}
+        <View className="px-6 mt-6">
+          <TouchableOpacity 
+            onPress={() => router.push('/(admin)/manage-stores' as any)}
+            className="bg-[#1C1C1E] rounded-[28px] p-6 border border-white/5 flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center flex-1">
+              <View className="bg-[#3B82F6]/20 w-12 h-12 rounded-full items-center justify-center mr-4 border border-[#3B82F6]/30">
+                <Ionicons name="storefront" size={22} color="#3B82F6" />
+              </View>
+              <View>
+                <Text className="text-white text-lg font-bold">Gestión de Locales</Text>
+                <Text className="text-gray-400 text-xs mt-0.5">Editar, borrar y añadir tiendas</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#3B82F6" />
+          </TouchableOpacity>
+        </View>
+
+        {/* --- TARJETA: GESTIÓN DE CITAS --- */}
+        <View className="px-6 mt-4">
+          <TouchableOpacity 
+            onPress={() => router.push('/(admin)/manage-appointments' as any)}
+            className="bg-[#1C1C1E] rounded-[28px] p-6 border border-white/5 flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center flex-1">
+              <View className="bg-[#F97316]/20 w-12 h-12 rounded-full items-center justify-center mr-4 border border-[#F97316]/30">
+                <Ionicons name="calendar" size={22} color="#F97316" />
+              </View>
+              <View>
+                <Text className="text-white text-lg font-bold">Aprobación de Citas</Text>
+                <Text className="text-gray-400 text-xs mt-0.5">Revisar solicitudes de visitas</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#F97316" />
+          </TouchableOpacity>
+        </View>
+
+        {/* --- TARJETA: GESTIÓN DE CONTRATOS --- */}
+        <View className="px-6 mt-4">
+          <TouchableOpacity 
+            onPress={() => router.push('/(admin)/manage-contracts' as any)}
+            className="bg-[#1C1C1E] rounded-[28px] p-6 border border-white/5 flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center flex-1">
+              <View className="bg-[#10B981]/20 w-12 h-12 rounded-full items-center justify-center mr-4 border border-[#10B981]/30">
+                <Ionicons name="document-attach" size={22} color="#10B981" />
+              </View>
+              <View>
+                <Text className="text-white text-lg font-bold">Subir Contratos PDF</Text>
+                <Text className="text-gray-400 text-xs mt-0.5">Vincular documentos legales a locales</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color="#10B981" />
+          </TouchableOpacity>
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );

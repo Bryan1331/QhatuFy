@@ -1,11 +1,11 @@
-import { Stack, useRootNavigationState, useRouter, useSegments, Href } from 'expo-router';
+import { Href, Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { Provider, useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import '../global.css';
-import { authAtom } from '../store/authAtom';
-import { supabase } from '../services/supabase';
 import { getExtendedProfile } from '../services/authService';
+import { supabase } from '../services/supabase';
+import { authAtom } from '../store/authAtom';
 
 /**
  * InitialLayout
@@ -75,10 +75,10 @@ function InitialLayout() {
      * Lógica principal de enrutamiento protegido (Auth Guard).
      * Decide a qué pantalla enviar al usuario basándose en su estado de autenticación, rol y perfil.
      */
-     
+
     // 1. Evitar redirección si la app o el estado aún está cargando
     if (!isReady || !navigationState?.key || authState.isLoading) return;
-    
+
     // 2. Si hay sesión de Supabase pero el perfil de BD aún no llega, esperar.
     if (authState.session && !authState.user) return;
 
@@ -95,8 +95,8 @@ function InitialLayout() {
         }, 0);
       }
       return;
-    } 
-    
+    }
+
     // --- LÓGICA DE USUARIO AUTENTICADO ---
     const isCompleteProfile = rootSegment === '(auth)' && String(segments[1]) === 'complete-profile';
     const hasCompletedProfile = authState.user?.hasCompletedProfile;
@@ -115,7 +115,7 @@ function InitialLayout() {
     } else {
       if (rootSegment !== '(private)') {
         setTimeout(() => {
-          router.replace('/(private)/dashboard' as Href);
+          router.replace('/(private)' as Href);
         }, 0);
       }
     }

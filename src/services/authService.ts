@@ -84,7 +84,7 @@ export const updateUserProfile = async (userId: string, dni: string, direccion: 
     if (error) {
       throw new Error(error.message);
     }
-    
+
     return true;
   } catch (err: any) {
     throw new Error(err.message || 'Error al actualizar el perfil');

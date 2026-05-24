@@ -39,7 +39,7 @@ export function PaymentCard({ payments }: PaymentCardProps) {
 
   // Obtenemos el pago más próximo para mostrar su fecha y símbolo de moneda en la cabecera
   const closestPayment = sortedPayments[0];
-  const currencySymbol = closestPayment.currency === 'USD' ? '$' : 'S/';
+  const currencySymbol = 'S/ ';
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -88,7 +88,7 @@ export function PaymentCard({ payments }: PaymentCardProps) {
                 </Text>
               </View>
               <Text className="text-white font-bold text-base">
-                {payment.currency === 'USD' ? '$' : 'S/'}{payment.amount.toFixed(2)}
+                S/ {payment.amount.toFixed(2)}
               </Text>
             </View>
           ))}

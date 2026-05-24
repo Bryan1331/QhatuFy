@@ -85,3 +85,56 @@ export const getDashboardStats = async () => {
     throw new Error(error.message || 'Error al obtener las estadísticas del dashboard.');
   }
 };
+
+export interface NewStoreData {
+  nombre: string;
+  ubicacion: string;
+  precio: number;
+  dimensiones: string;
+  imagen_url: string;
+  descripcion?: string; // Opcional
+}
+
+export const createNewStore = async (storeData: NewStoreData): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('locales').insert([{ ...storeData, disponible: true }]);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error creando tienda:', error);
+    return false;
+  }
+};
+
+export const updateStore = async (id: string, storeData: Partial<NewStoreData>): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('locales').update(storeData).eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error actualizando tienda:', error);
+    return false;
+  }
+};
+
+export const deleteStore = async (id: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('locales').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error eliminando tienda:', error);
+    return false;
+  }
+};
+
+export const getAdminStores = async () => {
+  try {
+    const { data, error } = await supabase.from('locales').select('*').order('nombre', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error obteniendo tiendas:', error);
+    return [];
+  }
+};
