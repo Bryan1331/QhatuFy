@@ -8,11 +8,7 @@ import { supabase } from '../services/supabase';
 import { authAtom } from '../store/authAtom';
 
 /**
- * InitialLayout
- * -------------
- * Componente principal interno que funciona como Guardián de Autenticación (AuthGuard).
- * Observa el estado global (authAtom) de Jotai y maneja la redirección del enrutador
- * basándose en si el usuario tiene una sesión activa (isAuthenticated).
+ * Inicializador del Layout de la app que gestiona la autenticación y redirecciones automáticas.
  */
 function InitialLayout() {
   const segments = useSegments();
@@ -26,14 +22,10 @@ function InitialLayout() {
   }, []);
 
   useEffect(() => {
-    /**
-     * Escucha los cambios de estado de autenticación directamente desde Supabase.
-     * Si hay sesión, obtiene el perfil completo del usuario (KYC) y actualiza el estado global.
-     */
+    // Escucha cambios de sesión y obtiene el perfil extendido del usuario
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         try {
-          // Llama a authService.getExtendedProfile
           const profile = await getExtendedProfile(session.user.id, session.user.email || '');
           if (!profile) throw new Error("Perfil no encontrado");
 
@@ -41,10 +33,9 @@ function InitialLayout() {
             user: profile as any,
             session,
             isAuthenticated: true,
-            isLoading: false, // Crítico: poner en false solo después de cargar
+            isLoading: false,
           });
         } catch (error) {
-          // Blindaje: si falla, forzar signOut y redirigir a welcome
           console.error("Fallo al hidratar el perfil extendido:", error);
           await supabase.auth.signOut();
           setAuthState({
@@ -71,18 +62,10 @@ function InitialLayout() {
   }, [setAuthState, router]);
 
   useEffect(() => {
-    /**
-     * Lógica principal de enrutamiento protegido (Auth Guard).
-     * Decide a qué pantalla enviar al usuario basándose en su estado de autenticación, rol y perfil.
-     */
-
-    // 1. Evitar redirección si la app o el estado aún está cargando
+    // Guardián de rutas y redirecciones automáticas
     if (!isReady || !navigationState?.key || authState.isLoading) return;
 
-    // 2. Si hay sesión de Supabase pero el perfil de BD aún no llega, esperar.
     if (authState.session && !authState.user) return;
-
-    console.log('Navegación detectada - Rol:', authState.user?.role, 'Segmentos:', segments);
 
     const rootSegment = String(segments[0]);
     const inAuthGroup = rootSegment === '(auth)';
@@ -97,13 +80,12 @@ function InitialLayout() {
       return;
     }
 
-    // --- LÓGICA DE USUARIO AUTENTICADO ---
     const isCompleteProfile = rootSegment === '(auth)' && String(segments[1]) === 'complete-profile';
     const hasCompletedProfile = authState.user?.hasCompletedProfile;
     const role = authState.user?.role;
 
     if (isCompleteProfile && !hasCompletedProfile) {
-      return; // Permitimos que se quede en la pantalla de completar perfil
+      return;
     }
 
     if (role === 'admin') {
@@ -133,10 +115,7 @@ function InitialLayout() {
 }
 
 /**
- * RootLayout
- * ----------
- * Layout exterior requerido por Expo Router. Envuelve la aplicación entera
- * en el Provider de Jotai para proveer visibilidad del store a todas las jerarquías.
+ * Componente raíz de la aplicación que envuelve InitialLayout en el proveedor de Jotai.
  */
 export default function RootLayout() {
   return (

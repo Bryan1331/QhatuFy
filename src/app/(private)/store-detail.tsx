@@ -33,7 +33,7 @@ export default function StoreDetailScreen() {
     setIsLoading(true);
 
     try {
-      // VALIDACIÓN: Verificar si ya tiene una cita previa con este local
+      // Verificar si ya existe una cita pendiente o aprobada para este local
       const { data: existente, error: errCheck } = await supabase
         .from('citas')
         .select('id')
@@ -55,7 +55,7 @@ export default function StoreDetailScreen() {
       ]);
 
       if (!error) {
-        // SOLUCIÓN CLAVE: Sincronizar la Nube con la Base de Datos Local instantáneamente
+        // Sincronizar datos locales de forma inmediata
         await syncTenantData(auth.user.id);
 
         setIsLoading(false);

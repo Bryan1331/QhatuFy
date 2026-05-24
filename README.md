@@ -1,149 +1,139 @@
 # 🏢 QhatuFy
 
-> Aplicación móvil para la gestión de alquileres comerciales.
+> Aplicación móvil nativa para la gestión inteligente de alquileres y locales comerciales.
 
-QhatuFy es una app que permite a los inquilinos gestionar sus contratos, pagos y documentos de identidad (KYC), y a los administradores verificar y aprobar solicitudes desde un panel dedicado.
-
----
-
-## 📋 ¿Qué puede hacer la app?
-
-### Para el Inquilino (usuario normal):
-- Registrarse e iniciar sesión.
-- Completar su perfil subiendo DNI, dirección y celular (proceso KYC).
-- Ver su dashboard con contratos, pagos pendientes y accesos rápidos.
-- Cerrar sesión de forma segura.
-
-### Para el Administrador:
-- Ver cuántas solicitudes de verificación hay pendientes.
-- Revisar los documentos de cada usuario (foto del DNI).
-- Aprobar o rechazar solicitudes.
-- Cerrar sesión.
+**QhatuFy** es una plataforma móvil premium diseñada de forma modular para agilizar la gestión de complejos comerciales y galerías. Permite a los inquilinos buscar locales, coordinar visitas virtuales o físicas, firmar contratos digitales y gestionar sus pagos offline de forma segura. Paralelamente, brinda a los administradores un completo centro de control administrativo para supervisar el proceso legal y logístico de la galería.
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## 📋 Funcionalidades Principales
 
-| Tecnología | ¿Para qué se usa? |
+### 👤 Para el Inquilino (Espacio Privado)
+- **Autenticación e Identidad**: Registro seguro integrado con Supabase Auth.
+- **Proceso KYC (Verificación de Identidad)**: Formulario robusto para enviar DNI, Teléfono Celular, Dirección Física y fotografía digital legible del documento para la aprobación administrativa.
+- **Dashboard Premium**: Interfaz en modo oscuro con visualización reactiva de locales alquilados vigentes, calendario de pagos estructurado y métricas clave.
+- **Catálogo de Locales**: Filtro de locales comerciales disponibles con información detallada de inversión mensual, dimensiones y descripciones del stand.
+- **Agendamiento de Visitas**: Solicitud de citas presenciales integradas con control automático para evitar registros duplicados.
+- **Pipeline de Citas**: Visualización del estado en tiempo real (Pendiente / Aprobada) de las citas programadas.
+- **Mis Contratos**: Acceso y visualización a los contratos PDF oficiales cargados por la administración en cualquier momento.
+- **Reglamento**: Consulta interactiva de las Normas de Convivencia y penalidades de la galería comercial.
+- **Almacenamiento Offline-First**: Acceso instantáneo a contratos, visitas y pagos locales sin consumo de datos gracias al soporte integrado de base de datos local (SQLite).
+
+### 👮 Para el Administrador (Espacio de Control)
+- **Centro de Control**: Dashboard interactivo que muestra alertas críticas como solicitudes KYC pendientes de revisión.
+- **Verificación KYC**: Panel visual de aprobación o rechazo de expedientes KYC, con liberación inmediata del perfil o borrado selectivo de fotos erróneas.
+- **Gestión de Citas comerciales**: Visualización de citas de inquilinos para aprobarlas, rechazarlas o concluirlas marcándolas como "Atendidas".
+- **Gestión de Locales Comerciales**: CRUD completo de locales (crear stands nuevos, subir imágenes del local, editar dimensiones, ajustar precios y eliminar stands).
+- **Gestión de Contratos y PDFs**: Creación de la vinculación legal de locales activos con inquilinos mediante la carga directa de contratos PDFs y la generación automatizada del cronograma del primer pago mensual.
+
+---
+
+## 🛠️ Stack Tecnológico de Vanguardia
+
+| Tecnología | Rol en la Aplicación |
 |---|---|
-| [Expo](https://expo.dev/) + [React Native](https://reactnative.dev/) | Construir la app para Android e iOS con un solo código. |
-| [TypeScript](https://www.typescriptlang.org/) | Escribir código con menos errores gracias al tipado. |
-| [Expo Router](https://docs.expo.dev/router/introduction/) | Navegación entre pantallas basada en carpetas. |
-| [Jotai](https://jotai.org/) | Estado global (memoria compartida entre pantallas). |
-| [Supabase](https://supabase.com/) | Base de datos, autenticación y almacenamiento de archivos en la nube. |
-| [NativeWind v4](https://www.nativewind.dev/) | Estilos con clases de Tailwind CSS en React Native. |
+| **[React Native](https://reactnative.dev/)** | Framework base para el compilado nativo en Android y iOS. |
+| **[Expo](https://expo.dev/)** | Ecosistema y SDK para acceso rápido a componentes de hardware nativos (Cámara, Image Picker, FileSystem). |
+| **[TypeScript](https://www.typescriptlang.org/)** | Tipado estricto para asegurar la escalabilidad del codebase. |
+| **[Expo Router](https://docs.expo.dev/router/introduction/)** | Enrutador dinámico basado en archivos y subgrupos lógicos de pantallas. |
+| **[Jotai](https://jotai.org/)** | Gestor de estado global súper ligero basado en átomos de memoria compartida. |
+| **[Supabase](https://supabase.com/)** | Infraestructura de Base de Datos PostgreSQL, Autenticación de usuarios y Almacenamiento seguro en la nube. |
+| **[SQLite (expo-sqlite)](https://docs.expo.dev/versions/latest/sdk/sqlite/)** | Base de datos interna en el teléfono para persistencia de datos local (Offline-First). |
+| **[NativeWind v4](https://www.nativewind.dev/)** | Motor de estilos de Tailwind CSS en React Native para interfaces minimalistas y elegantes. |
 
 ---
 
 ## 📂 Estructura del Proyecto
 
+El código está estructurado con una arquitectura limpia de capas lógicas:
+
 ```
 src/
-├── app/                        ← Pantallas de la aplicación
-│   ├── _layout.tsx             ← Guardián de rutas (AuthGuard)
-│   ├── index.tsx               ← Pantalla de carga inicial
-│   ├── welcome.tsx             ← Pantalla de bienvenida
-│   ├── (auth)/                 ← Pantallas públicas
-│   │   ├── login.tsx
-│   │   ├── register.tsx
-│   │   └── complete-profile.tsx
-│   ├── (private)/              ← Pantallas del inquilino
-│   │   └── dashboard.tsx
-│   └── (admin)/                ← Pantallas del administrador
-│       ├── index.tsx
-│       └── verify-documents.tsx
+├── app/                        ← Pantallas organizadas por grupos de navegación
+│   ├── _layout.tsx             ← Inicializador central y AuthGuard principal
+│   ├── index.tsx               ← Pantalla de carga y validación de tokens
+│   ├── welcome.tsx             ← Bienvenida y onboarding
+│   ├── (auth)/                 ← Pantallas públicas (Login, Register, KYC, Términos)
+│   ├── (private)/              ← Pantallas del inquilino (Dashboard, Catálogo, Citas, Reglamento)
+│   └── (admin)/                ← Pantallas del administrador (Gestión de stands, Citas, KYC, Contratos)
 │
-├── components/                 ← Componentes reutilizables
-│   ├── admin/
-│   │   └── SolicitudCard.tsx
-│   └── dashboard/
-│       └── PaymentCard.tsx
+├── components/                 ← Piezas modulares reutilizables de UI
+│   ├── admin/                  (Componentes para administración)
+│   ├── catalog/                (Componentes de catálogo comercial)
+│   └── dashboard/              (Componentes de dashboard del inquilino)
 │
-├── services/                   ← Comunicación con Supabase
-│   ├── supabase.ts
-│   ├── authService.ts
-│   ├── profileService.ts
-│   ├── storageService.ts
-│   └── adminService.ts
+├── services/                   ← Capa lógica y comunicación de datos
+│   ├── supabase.ts             (Cliente inicializador)
+│   ├── authService.ts          (Registro, Login y KYC consolidado)
+│   ├── catalogService.ts       (Peticiones del catálogo)
+│   ├── storageService.ts       (Gestión de almacenamiento base64)
+│   ├── adminService.ts         (Lógica operativa de administración)
+│   ├── syncService.ts          (Servicio de sincronización Offline-First)
+│   └── localDb.ts              (Controlador de SQLite local)
 │
-├── store/                      ← Estado global (Jotai)
-│   ├── authAtom.ts
-│   └── adminAtom.ts
-│
-└── types/                      ← Definiciones de tipos
-    └── payment.ts
+├── store/                      ← Estados de memoria reactivos compartidos (Jotai Atoms)
+└── types/                      ← Definiciones estrictas de TypeScript
 ```
 
 ---
 
-## 🚀 ¿Cómo levantar el proyecto?
+## 🚀 Instalación y Despliegue Local
 
 ### Requisitos previos:
-- Tener instalado [Node.js](https://nodejs.org/) (versión 18 o superior).
-- Tener la app **Expo Go** en tu celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779)).
+- Tener instalado **[Node.js](https://nodejs.org/)** (versión 18 o superior recomendada).
+- Tener instalada la aplicación móvil de pruebas **Expo Go** en tu dispositivo móvil ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) o [iOS](https://apps.apple.com/app/expo-go/id982107779)) o un emulador previamente configurado.
 
-### Paso 1: Instalar dependencias
+### Paso 1: Instalar dependencias del proyecto
+Abre la terminal en la raíz del proyecto y ejecuta:
 ```bash
 npm install
 ```
 
-### Paso 2: Configurar variables de entorno
-Crea un archivo `.env` en la raíz del proyecto con tus credenciales de Supabase:
-```
-EXPO_PUBLIC_SUPABASE_URL=tu_url_de_supabase
-EXPO_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima
+### Paso 2: Configurar las variables de entorno
+Crea un archivo `.env` en la raíz del proyecto y añade tus credenciales seguras de Supabase:
+```env
+EXPO_PUBLIC_SUPABASE_URL=tu_url_de_supabase_aqui
+EXPO_PUBLIC_SUPABASE_ANON_KEY=tu_clave_publica_anon_aqui
 ```
 
-### Paso 3: Iniciar la app
+### Paso 3: Iniciar Metro Bundler
+Inicia el servidor de empaquetado de Expo:
 ```bash
 npx expo start
 ```
+*Tip:* Utiliza la bandera `-c` para limpiar el caché de compilación en caso de que sea necesario: `npx expo start -c`.
 
-### Paso 4: Abrir en tu dispositivo
-Una vez que aparezca el código QR en la terminal:
-- **Android:** Abre Expo Go y escanea el QR.
-- **iPhone:** Escanea el QR con la cámara del celular.
-- **Emulador:** Presiona `a` (Android) o `i` (iOS) en la terminal.
+### Paso 4: Cargar la App
+Escanea el código QR que se muestra en tu terminal:
+- **Android:** Escanéalo directamente desde la aplicación de Expo Go.
+- **iOS:** Escanéalo utilizando la aplicación de la Cámara del iPhone.
+- **Emuladores:** Presiona `a` en la terminal para emulador Android, o `i` para el simulador de iOS.
 
 ---
 
-## 🔄 Flujo de la Aplicación
+## 🔄 Flujo de Rutas y Redirecciones
+
+QhatuFy integra un guardián de rutas automático y robusto dentro del enrutador. La redirección de navegación del usuario final se realiza reactivamente siguiendo este flujo lógico:
 
 ```
-Usuario abre la app
-      │
-      ▼
-  ¿Tiene sesión?
-      │
-  NO ─┤
-      ▼
-  /welcome → /login o /register
-      │
-      ▼
-  Inicia sesión
-      │
-  SÍ ─┤
-      ▼
-  ¿Qué rol tiene?
-      │
-  usuario ──→ /(private)/dashboard
-  admin   ──→ /(admin)
+                  Usuario abre la Aplicación
+                              │
+                              ▼
+                ¿Tiene una sesión activa?
+                 ├── NO ──> /welcome (Público) ──> /login o /register
+                 │
+                 └── SÍ ──> ¿Completó su expediente KYC?
+                              ├── NO ──> /complete-profile (Formulario de identidad)
+                              │
+                              └── SÍ ──> ¿Qué rol tiene asignado?
+                                           ├── admin ──> /(admin) (Dashboard Admin)
+                                           └── user  ──> /(private) (Dashboard Inquilino)
 ```
 
----
 
-## 📖 Documentación Adicional
 
-Para entender el código a profundidad, consulta la **[Guía Técnica](./GUIA_TECNICA.md)**, donde encontrarás:
-- Glosario de todos los términos técnicos.
-- Ejemplos de cómo crear pantallas, botones y navegación.
-- Explicación detallada de cada carpeta y archivo.
-- Reglas importantes del proyecto.
+## 👥 Equipo y Soporte
 
----
+Desarrollado con altos estándares de calidad por el equipo técnico de QhatuFy.
 
-## 👥 Equipo
-
-Desarrollado por el equipo de QhatuFy.
-
-**© 2026 QhatuFy**
+**© 2026 QhatuFy. Todos los derechos reservados.**

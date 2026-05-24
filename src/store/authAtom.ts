@@ -1,9 +1,6 @@
 import { atom } from 'jotai';
 
-/**
- * Representa el perfil del usuario (ya sea inquilino o administrador).
- * Se sincroniza con la base de datos (tabla 'perfiles').
- */
+/** Perfil de usuario sincronizado con la base de datos. */
 export interface UserProfile {
   id: string;
   nombre: string | null;
@@ -17,9 +14,7 @@ export interface UserProfile {
   foto_dni_url?: string;
 }
 
-/**
- * Estado global de autenticación de la aplicación.
- */
+/** Estado de autenticación global de la aplicación. */
 export interface AuthState {
   user: UserProfile | null;
   session: any | null;
@@ -27,9 +22,7 @@ export interface AuthState {
   isAuthenticated: boolean;
 }
 
-/**
- * Átomo global que mantiene el estado de la sesión activa y el perfil del usuario.
- */
+/** Átomo global de Jotai para gestionar la sesión y el perfil del usuario. */
 export const authAtom = atom<AuthState>({
   user: null,
   session: null,

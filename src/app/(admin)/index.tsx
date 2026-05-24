@@ -9,24 +9,16 @@ import { supabase } from '../../services/supabase';
 import { adminStatsAtom } from '../../store/adminAtom';
 
 /**
- * AdminDashboard
- * --------------
  * Pantalla principal del panel de administración de QhatuFy.
- * Aquí el administrador puede ver estadísticas generales y acceder
- * a herramientas de gestión como la verificación de documentos (KYC).
  */
 export default function AdminDashboard() {
   const router = useRouter();
   
-  // Estado global para las estadísticas del dashboard
   const [stats, setStats] = useAtom(adminStatsAtom);
-  
-  // Estado local para manejar la carga inicial de datos
   const [isLoading, setIsLoading] = useState(true);
 
   /**
-   * Cierra la sesión del administrador de forma segura
-   * y redirige a la pantalla de inicio de sesión.
+   * Cierra la sesión del administrador y redirige a login.
    */
   const handleLogout = async () => {
     try {
@@ -37,10 +29,6 @@ export default function AdminDashboard() {
     }
   };
 
-  /**
-   * Efecto para cargar las estadísticas al montar el componente.
-   * Llama al servicio de administración y actualiza el estado global.
-   */
   useEffect(() => {
     const loadStats = async () => {
       try {

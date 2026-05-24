@@ -8,22 +8,17 @@ import { authAtom } from '../../store/authAtom';
 import { signUpUser } from '../../services/authService';
 
 /**
- * RegisterScreen
- * --------------
- * Pantalla de creación de cuenta. Implementa validaciones condicionales,
- * conexión con Supabase (signUpUser) y redirige el flujo estableciendo hasCompletedProfile en falso.
+ * Pantalla de creación de cuenta del inquilino.
  */
 export default function RegisterScreen() {
   const router = useRouter();
   const setAuth = useSetAtom(authAtom);
 
-  // Estados Locales
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Estados visuales y de UX
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -32,8 +27,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
   /**
-   * Valida rigurosamente la entrada de usuario antes de proceder a la creación
-   * de la cuenta mediante Supabase para asegurar integridad de datos.
+   * Realiza validaciones previas y registra al usuario en Supabase Auth.
    */
   const handleRegister = async () => {
     setError('');
@@ -70,17 +64,16 @@ export default function RegisterScreen() {
     }
 
     try {
-      setLoading(true); // Bloquear formulario durante transacción
+      setLoading(true);
       const user = await signUpUser(email, password, name);
       
-      // La actualización a Auth Atom causa que _layout.tsx redirija automáticamente.
       setAuth({
         isAuthenticated: true,
         user: { 
           id: user.id, 
           nombre: name, 
           email: email, 
-          hasCompletedProfile: false // Obliga al usuario a pasar por el flujo KYC
+          hasCompletedProfile: false
         } as any,
         session: null,
         isLoading: false,

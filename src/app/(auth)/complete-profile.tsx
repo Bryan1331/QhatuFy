@@ -6,7 +6,7 @@ import { Camera } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { updateKYCProfile } from '../../services/profileService';
+import { updateKYCProfile } from '../../services/authService';
 import { uploadDocumentImage } from '../../services/storageService';
 import { authAtom } from '../../store/authAtom';
 
@@ -19,13 +19,11 @@ export default function CompleteProfileScreen() {
   const [direccion, setDireccion] = useState('');
   const [dniFront, setDniFront] = useState<string | null>(null);
   
-  // UX Loading Blindaje
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
 
   /**
-   * Gestiona el acceso y la carga de imágenes usando expo-image-picker.
-   * Maneja permisos rigurosos antes de permitir seleccionar las fotos.
+   * Abre la galería para que el usuario seleccione una foto de su documento.
    */
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -45,11 +43,10 @@ export default function CompleteProfileScreen() {
     }
   };
 
-  // Validar si el DNI tiene entre 8 y 11 dígitos, celular tiene al menos 9 caracteres, direccion no esta vacia y la imagen está subida
   const isFormValid = dni.length >= 8 && celular.trim().length >= 9 && direccion.trim().length > 0 && dniFront !== null;
 
   /**
-   * Finaliza el flujo KYC subiendo la imagen y actualizando el perfil en Supabase
+   * Sube la imagen del documento y registra la información de perfil (KYC) en la base de datos.
    */
   const onFinish = async () => {
     if (!auth.user || !isFormValid) return;
@@ -57,15 +54,13 @@ export default function CompleteProfileScreen() {
     try {
       setLoading(true);
       
-      // 1. Subir la foto al storage
       setLoadingText('Subiendo documento de forma segura...');
       const fotoUrl = await uploadDocumentImage(auth.user.id, dniFront!);
 
-      // 2. Actualizar la base de datos
       setLoadingText('Verificando perfil...');
       await updateKYCProfile(auth.user.id, dni, celular, direccion, fotoUrl);
 
-      // 3. Actualizar el estado global en tiempo real
+      // Actualizar el estado local con la nueva información de verificación
       setAuth((prev) => {
         if (!prev.user) return prev;
         return {
@@ -82,7 +77,6 @@ export default function CompleteProfileScreen() {
         };
       });
 
-      // El layout root lo capturará automáticamente, o lo empujamos
       router.replace('/(private)');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo guardar la información');

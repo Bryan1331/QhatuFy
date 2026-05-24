@@ -10,7 +10,6 @@ export default function RulesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]">
       <View className="flex-row items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0A0A0A] z-10">
-        {/* FORZAR NAVEGACIÓN AL DASHBOARD */}
         <TouchableOpacity onPress={() => router.push('/(private)' as any)} className="p-2 -ml-2 rounded-full bg-white/5">
           <Ionicons name="arrow-back" size={20} color="#FFF" />
         </TouchableOpacity>

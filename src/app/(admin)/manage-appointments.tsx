@@ -8,13 +8,11 @@ import { supabase } from '../../services/supabase';
 export default function ManageAppointmentsScreen() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [inquilinos, setInquilinos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // 1. Cargar citas PENDIENTES y APROBADAS
       const { data: citas, error: errCitas } = await supabase
         .from('citas')
         .select('*, locales(*)')
@@ -23,15 +21,6 @@ export default function ManageAppointmentsScreen() {
 
       if (errCitas) throw errCitas;
       setAppointments(citas || []);
-
-      // 2. CORRECCIÓN: Cargar inquilinos desde la tabla 'perfiles' (o 'usuarios' según tu esquema)
-      // Ajusta el nombre de la tabla a 'perfiles' si 'usuarios' te da vacio
-      const { data: users, error: errUsers } = await supabase
-        .from('perfiles')
-        .select('id, nombre, email, verificacion_status');
-
-      if (!errUsers && users) setInquilinos(users);
-
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'No se pudieron cargar los datos.');

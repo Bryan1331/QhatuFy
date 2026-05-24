@@ -11,7 +11,7 @@ export const getPendingVerifications = async (): Promise<UserProfile[]> => {
       .from('perfiles')
       .select('*')
       .eq('verificacion_status', 'pendiente')
-      .neq('role', 'admin'); // <-- BLINDAJE: Excluimos tu cuenta de Admin
+      .neq('role', 'admin'); // Excluir cuenta de Administrador
 
     if (error) {
       throw new Error(error.message);
@@ -40,13 +40,9 @@ export const getPendingVerifications = async (): Promise<UserProfile[]> => {
  */
 export const updateVerification = async (userId: string, status: 'aprobado' | 'rechazado') => {
   try {
-    console.log('Iniciando update para:', userId, 'Status:', status);
-
     const updatePayload = status === 'rechazado'
       ? { verificacion_status: 'rechazado', has_completed_profile: false, foto_dni_url: null }
       : { verificacion_status: 'aprobado' };
-
-    console.log(`[AdminService] Ejecutando updateVerification para userId: ${userId} con payload:`, updatePayload);
 
     const { error } = await supabase
       .from('perfiles')
@@ -54,13 +50,12 @@ export const updateVerification = async (userId: string, status: 'aprobado' | 'r
       .eq('id', userId);
 
     if (error) {
-      console.error('ERROR CRÍTICO SUPABASE:', error);
       throw new Error(error.message);
     }
 
     return true;
   } catch (error: any) {
-    console.error('ERROR CRÍTICO SUPABASE:', error);
+    console.error('Error al actualizar verificación:', error);
     throw new Error(error.message || 'Error al actualizar el estado de verificación.');
   }
 };

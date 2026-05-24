@@ -13,7 +13,7 @@ export const syncTenantData = async (userId: string) => {
 
     if (errContratos || !contratos) throw errContratos;
 
-    // EL ORDEN ES CRÍTICO: Primero borramos hijos (pagos), luego padres (contratos)
+    // Borrar localmente para evitar duplicados. Orden: Hijos (pagos) -> Padres (contratos)
     await db.runAsync('DELETE FROM pagos');
     await db.runAsync('DELETE FROM contratos');
 
@@ -115,7 +115,7 @@ export const getLocalActiveContract = async () => {
 
   return {
     activeCount: countResult?.total || 0,
-    contractData: activeContracts || [] // Ahora devuelve un Array
+    contractData: activeContracts || []
   };
 };
 
@@ -129,4 +129,3 @@ export const getLocalAppointments = async (): Promise<any[]> => {
   `);
   return rows;
 };
-

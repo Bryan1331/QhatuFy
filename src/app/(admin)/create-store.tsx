@@ -59,7 +59,7 @@ export default function CreateStoreScreen() {
 
   const uploadImageToSupabase = async (uri: string) => {
     try {
-      // SOLUCIÓN A LOS 0 BYTES: Usamos FileSystem y decodificamos a ArrayBuffer
+      // Leer el archivo local en Base64 y convertir a ArrayBuffer para subir a Supabase
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
       const arrayBuffer = decode(base64);
       const fileName = `local_${Date.now()}.jpg`;
@@ -84,7 +84,7 @@ export default function CreateStoreScreen() {
     setIsLoading(true);
     let finalImageUrl = formData.imagen_url || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=800';
 
-    // Si el imageUri no empieza con http (es decir, es una foto nueva del teléfono), la subimos
+    // Si la imagen es local (no es una URL de internet), la subimos
     if (imageUri && !imageUri.startsWith('http')) {
       const uploadedUrl = await uploadImageToSupabase(imageUri);
       if (uploadedUrl) finalImageUrl = uploadedUrl;

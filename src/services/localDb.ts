@@ -7,7 +7,7 @@ export const getLocalDb = async () => {
 export const initLocalDb = async () => {
   const db = await getLocalDb();
   
-  // 1. Apagar foráneas, destruir todo y limpiar el caché local
+  // 1. Desactivar llaves foráneas y limpiar tablas existentes
   await db.execAsync(`
     PRAGMA foreign_keys = OFF;
     DROP TABLE IF EXISTS pagos;
@@ -17,7 +17,7 @@ export const initLocalDb = async () => {
     PRAGMA foreign_keys = ON;
   `);
 
-  // 2. Recrear el esquema perfecto
+  // 2. Crear las tablas locales necesarias para el funcionamiento Offline-First
   await db.execAsync(`
     CREATE TABLE IF NOT EXISTS locales (
       id TEXT PRIMARY KEY,

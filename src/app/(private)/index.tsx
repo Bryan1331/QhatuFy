@@ -11,10 +11,7 @@ import { authAtom } from '../../store/authAtom';
 import { PaymentRequirement } from '../../types/payment';
 
 /**
- * DashboardScreen
- * ---------------
- * Pantalla principal privada del cliente QhatuFy.
- * Extrae la información contextual directamente usando `useAtom`.
+ * Pantalla principal del inquilino (Dashboard).
  */
 export default function DashboardScreen() {
   const router = useRouter();
@@ -61,16 +58,12 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0D0D0D', paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
-      {/* 
-        Container general con padding. El padding Bottom extra (pb-24) 
-        es para que el scroll no quede tapado por la barra de navegación inferior falsa.
-      */}
+      {/* ScrollView principal */}
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
 
         {/* Header Premium */}
         <View className="flex-row items-center justify-between mt-4 mb-10">
           <View className="flex-row items-center flex-1">
-            {/* FOTO CONVERTIDA EN BOTÓN */}
             <TouchableOpacity 
               onPress={() => router.push('/(private)/profile' as any)} 
               className="relative mr-3"

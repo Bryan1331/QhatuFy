@@ -11,12 +11,10 @@ import { supabase } from '../../services/supabase';
 export default function ManageContractsScreen() {
   const router = useRouter();
 
-  // Listas maestras desde Supabase
   const [inquilinos, setInquilinos] = useState<any[]>([]);
   const [locales, setLocales] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Estado del formulario
   const [selectedInquilino, setSelectedInquilino] = useState<any>(null);
   const [selectedLocal, setSelectedLocal] = useState<any>(null);
   const [pdfFile, setPdfFile] = useState<any>(null);
@@ -24,7 +22,6 @@ export default function ManageContractsScreen() {
   const [fechaPago, setFechaPago] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Modales
   const [showInquilinosModal, setShowInquilinosModal] = useState(false);
   const [showLocalesModal, setShowLocalesModal] = useState(false);
 
@@ -32,7 +29,6 @@ export default function ManageContractsScreen() {
     const loadData = async () => {
       setIsLoadingData(true);
       try {
-        // 1. Traemos estrictamente a los que tienen rol 'user' (Inquilinos)
         const { data: users, error: errUsers } = await supabase
           .from('perfiles')
           .select('id, nombre, email, verificacion_status, role')
@@ -41,10 +37,9 @@ export default function ManageContractsScreen() {
         if (errUsers) {
           console.error("Error cargando usuarios:", errUsers);
         } else if (users) {
-          setInquilinos(users); // Ya vienen filtrados desde la base de datos
+          setInquilinos(users);
         }
 
-        // 2. Cargar locales disponibles
         const { data: stores } = await supabase.from('locales').select('*');
         const { data: activeContracts } = await supabase.from('contratos').select('local_id').eq('estado', 'activo');
 
@@ -62,9 +57,9 @@ export default function ManageContractsScreen() {
     loadData();
   }, []);
 
-  // NUEVA FUNCIÓN: Máscara para auto-completar los slashes en la fecha
+  // Máscara para autocompletar las barras de fecha (DD/MM/YYYY)
   const handleDateChange = (text: string) => {
-    let cleaned = text.replace(/[^0-9]/g, ''); // Eliminar letras o símbolos
+    let cleaned = text.replace(/[^0-9]/g, '');
     if (cleaned.length > 2 && cleaned.length <= 4) {
       cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2);
     } else if (cleaned.length > 4) {
@@ -99,7 +94,6 @@ export default function ManageContractsScreen() {
 
     setIsSubmitting(true);
     try {
-      // 1. Crear el registro base del contrato
       const { data: newContract, error: insertError } = await supabase
         .from('contratos')
         .insert([{ inquilino_id: selectedInquilino.id, local_id: selectedLocal.id, estado: 'activo' }])
@@ -108,7 +102,7 @@ export default function ManageContractsScreen() {
 
       if (insertError || !newContract) throw insertError;
 
-      // SOLUCIÓN AL BUG DE RED: Lectura base64 directa
+      // Leer archivo local como base64 para evitar errores de carga
       const base64 = await FileSystem.readAsStringAsync(pdfFile.uri, { encoding: 'base64' });
       const arrayBuffer = decode(base64);
       const fileName = `contrato_${newContract.id}_${Date.now()}.pdf`;
@@ -119,7 +113,6 @@ export default function ManageContractsScreen() {
 
       if (uploadError) throw uploadError;
 
-      // 3. Obtener URL y actualizar el contrato
       const { data: publicUrlData } = supabase.storage.from('contratos').getPublicUrl(fileName);
 
       await supabase
@@ -127,11 +120,11 @@ export default function ManageContractsScreen() {
         .update({ documento_url: publicUrlData.publicUrl })
         .eq('id', newContract.id);
 
-      // Insertar el Pago inicial con moneda PEN
+      // Insertar el pago inicial del contrato en soles (PEN)
       const { error: pagoError } = await supabase.from('pagos').insert([{
         contrato_id: newContract.id,
         monto: parseFloat(monto),
-        moneda: 'PEN', // Cambiado de USD a PEN
+        moneda: 'PEN',
         fecha_vencimiento: isoDate,
         estado: 'pendiente'
       }]);

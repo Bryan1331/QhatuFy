@@ -15,7 +15,7 @@ export default function AppointmentsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'PENDIENTE' | 'APROBADO'>('PENDIENTE');
 
-  // CAMBIO CLAVE: Cargar datos cada vez que la pantalla gana el foco visual
+  // Recargar citas cuando la pantalla gana el foco
   useFocusEffect(
     useCallback(() => {
       const loadAppointments = async () => {
@@ -28,7 +28,6 @@ export default function AppointmentsScreen() {
     }, [])
   );
 
-  // Helper para formatear fecha (ej: Jue, 28 May • 10:30 AM)
   const formatDate = (isoString: string) => {
     try {
       const date = new Date(isoString);
@@ -53,7 +52,6 @@ export default function AppointmentsScreen() {
     }
   };
 
-  // ESTADO BLOQUEADO: Si el usuario no tiene su KYC aprobado
   if (auth.user?.verificacion_status !== 'aprobado') {
     return (
       <SafeAreaView className="flex-1 bg-[#0A0A0A] items-center justify-center px-6">
@@ -88,7 +86,6 @@ export default function AppointmentsScreen() {
     );
   }
 
-  // ESTADO DESBLOQUEADO: UI premium de Pipeline de Visitas real
   return (
     <SafeAreaView className="flex-1 bg-[#0A0A0A]">
       <ScrollView

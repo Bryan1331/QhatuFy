@@ -3,19 +3,18 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 
 /**
- * Sube un archivo de imagen al bucket 'documentos' de Supabase Storage.
- * Garantiza blindaje en nombres de archivos únicos y manejo del contentType.
+ * Sube una imagen al bucket de Supabase Storage leyendo el archivo en base64 para evitar errores de red.
  */
 export const uploadDocumentImage = async (userId: string, uri: string): Promise<string> => {
   try {
     const fileName = `dni_${userId}_${Date.now()}.jpg`;
     
-    // Obtenemos el cuerpo del archivo leyendo localmente en Base64 para evitar el bug de 0 Bytes
+    // Leer el archivo local en formato Base64
     const base64File = await FileSystem.readAsStringAsync(uri, {
       encoding: 'base64' as any,
     });
     
-    // Convertimos la cadena Base64 a ArrayBuffer para Supabase
+    // Convertir Base64 a ArrayBuffer para Supabase
     const fileBuffer = decode(base64File);
 
     const { data, error } = await supabase.storage
