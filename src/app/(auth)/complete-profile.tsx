@@ -18,14 +18,15 @@ export default function CompleteProfileScreen() {
   const [celular, setCelular] = useState('');
   const [direccion, setDireccion] = useState('');
   const [dniFront, setDniFront] = useState<string | null>(null);
+  const [dniBack, setDniBack] = useState<string | null>(null); // NUEVO ESTADO
   
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('');
 
   /**
-   * Abre la galería para que el usuario seleccione una foto de su documento.
+   * Abre la galería para que el usuario seleccione una foto especificando el lado del documento.
    */
-  const pickImage = async () => {
+  const pickImage = async (side: 'front' | 'back') => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (permissionResult.granted === false) {
@@ -39,11 +40,16 @@ export default function CompleteProfileScreen() {
     });
 
     if (!result.canceled) {
-      setDniFront(result.assets[0].uri);
+      if (side === 'front') {
+        setDniFront(result.assets[0].uri);
+      } else {
+        setDniBack(result.assets[0].uri);
+      }
     }
   };
 
-  const isFormValid = dni.length >= 8 && celular.trim().length >= 9 && direccion.trim().length > 0 && dniFront !== null;
+  // Validación estricta: Ahora exige ambas fotos
+  const isFormValid = dni.length >= 8 && celular.trim().length >= 9 && direccion.trim().length > 0 && dniFront !== null && dniBack !== null;
 
   /**
    * Sube la imagen del documento y registra la información de perfil (KYC) en la base de datos.
@@ -54,13 +60,20 @@ export default function CompleteProfileScreen() {
     try {
       setLoading(true);
       
-      setLoadingText('Subiendo documento de forma segura...');
-      const fotoUrl = await uploadDocumentImage(auth.user.id, dniFront!);
+      setLoadingText('Subiendo anverso del DNI...');
+      // Usamos el id + '_front' para evitar que el Storage sobreescriba la foto
+      const fotoFrontUrl = await uploadDocumentImage(`${auth.user.id}_front`, dniFront!);
+
+      setLoadingText('Subiendo reverso del DNI...');
+      // Usamos el id + '_back' 
+      const fotoBackUrl = await uploadDocumentImage(`${auth.user.id}_back`, dniBack!);
+
+      // Unimos ambas URLs separadas por coma para usar la misma columna en DB
+      const combinedUrl = `${fotoFrontUrl},${fotoBackUrl}`;
 
       setLoadingText('Verificando perfil...');
-      await updateKYCProfile(auth.user.id, dni, celular, direccion, fotoUrl);
+      await updateKYCProfile(auth.user.id, dni, celular, direccion, combinedUrl);
 
-      // Actualizar el estado local con la nueva información de verificación
       setAuth((prev) => {
         if (!prev.user) return prev;
         return {
@@ -72,7 +85,7 @@ export default function CompleteProfileScreen() {
             dni,
             celular,
             direccion,
-            foto_dni_url: fotoUrl,
+            foto_dni_url: combinedUrl,
           }
         };
       });
@@ -181,29 +194,49 @@ export default function CompleteProfileScreen() {
                 </View>
 
                 {/* Documento de Identidad KYC */}
-                <Text className="text-white/60 text-[11px] font-bold mb-2 uppercase tracking-widest ml-1">
+                <Text className="text-white/60 text-[11px] font-bold mb-2 uppercase tracking-widest ml-1 mt-2">
                   Fotografía del Documento
                 </Text>
 
-                <Pressable
-                  className="border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-4 items-center justify-center h-48 active:bg-white/5"
-                  onPress={pickImage}
-                  disabled={loading}
-                >
-                  {dniFront ? (
-                    <Image source={{ uri: dniFront }} className="w-full h-full rounded-xl object-cover" />
-                  ) : (
-                    <View className="items-center">
-                      <View className="bg-blue-500/20 p-4 rounded-full mb-3">
-                        <Camera color="#5C8FFB" size={32} />
+                <View className="flex-row justify-between">
+                  {/* ANVERSO */}
+                  <Pressable
+                    className="w-[48%] border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-3 items-center justify-center h-40 active:bg-white/5"
+                    onPress={() => pickImage('front')}
+                    disabled={loading}
+                  >
+                    {dniFront ? (
+                      <Image source={{ uri: dniFront }} className="w-full h-full rounded-xl object-cover" />
+                    ) : (
+                      <View className="items-center">
+                        <View className="bg-blue-500/20 p-3 rounded-full mb-2">
+                          <Camera color="#5C8FFB" size={24} />
+                        </View>
+                        <Text className="text-white font-bold text-[11px] mb-1">Anverso</Text>
+                        <Text className="text-gray-500 text-[9px] font-medium text-center">Lado con foto</Text>
                       </View>
-                      <Text className="text-white font-bold mb-1">Presiona para capturar</Text>
-                      <Text className="text-gray-500 text-xs font-medium text-center px-4">
-                        Asegúrate de que la imagen sea legible y sin reflejos.
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
+                    )}
+                  </Pressable>
+
+                  {/* REVERSO */}
+                  <Pressable
+                    className="w-[48%] border-dashed border-2 border-white/20 bg-[#1C1C1E] rounded-2xl p-3 items-center justify-center h-40 active:bg-white/5"
+                    onPress={() => pickImage('back')}
+                    disabled={loading}
+                  >
+                    {dniBack ? (
+                      <Image source={{ uri: dniBack }} className="w-full h-full rounded-xl object-cover" />
+                    ) : (
+                      <View className="items-center">
+                        <View className="bg-blue-500/20 p-3 rounded-full mb-2">
+                          <Camera color="#5C8FFB" size={24} />
+                        </View>
+                        <Text className="text-white font-bold text-[11px] mb-1">Reverso</Text>
+                        <Text className="text-gray-500 text-[9px] font-medium text-center">Huella y código</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                </View>
 
               </View>
 

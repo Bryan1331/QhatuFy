@@ -1,12 +1,12 @@
 import * as SQLite from 'expo-sqlite';
 
 export const getLocalDb = async () => {
-  return await SQLite.openDatabaseAsync('qhatufy.db');
+  return await SQLite.openDatabaseAsync('qhatufy_v2.db');
 };
 
 export const initLocalDb = async () => {
   const db = await getLocalDb();
-  
+
   // 1. Desactivar llaves foráneas y limpiar tablas existentes
   await db.execAsync(`
     PRAGMA foreign_keys = OFF;

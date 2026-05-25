@@ -22,6 +22,11 @@ export function SolicitudCard({ item, processingId, onApprove, onReject, onImage
     return name.substring(0, 2).toUpperCase();
   };
 
+  // 1. Extraer las URLs dividiendo el string por comas
+  const documentImages = item.foto_dni_url ? item.foto_dni_url.split(',') : [];
+  const frontImage = documentImages.length > 0 ? documentImages[0] : null;
+  const backImage = documentImages.length > 1 ? documentImages[1] : null;
+
   return (
     <View className="bg-[#1C1C1E] p-6 rounded-[32px] mb-5">
       {/* Header Usuario */}
@@ -59,28 +64,53 @@ export function SolicitudCard({ item, processingId, onApprove, onReject, onImage
         </View>
       </View>
 
-      {/* Visualizador DNI */}
-      <View className="w-full rounded-[20px] overflow-hidden mb-6 bg-[#0A0A0A] border border-white/5 relative">
-        {item.foto_dni_url ? (
-          <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress(item.foto_dni_url!)}>
-            <Image 
-              source={{ uri: item.foto_dni_url }} 
-              style={{ width: '100%', height: 200 }}
-              contentFit="cover"
-              transition={300}
-            />
-            {/* Badge flotante DNI Frontal */}
-            <View className="absolute bottom-4 left-4 bg-black/70 px-3 py-1.5 rounded-full flex-row items-center backdrop-blur-md">
-              <Ionicons name="image-outline" size={12} color="#D1D5DB" />
-              <Text className="text-gray-300 text-[10px] font-bold ml-1.5">DNI Frontal</Text>
+      {/* Visualizador DNI Dual (Anverso y Reverso) */}
+      <View className="flex-row gap-3 mb-6">
+        {/* Anverso */}
+        <View className="flex-1 rounded-[20px] overflow-hidden bg-[#0A0A0A] border border-white/5 relative h-32">
+          {frontImage ? (
+            <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress(frontImage)} className="w-full h-full">
+              <Image 
+                source={{ uri: frontImage }} 
+                style={{ width: '100%', height: '100%' }}
+                contentFit="cover"
+                transition={300}
+              />
+              <View className="absolute bottom-2 left-2 bg-black/70 px-2 py-1 rounded-full flex-row items-center">
+                <Ionicons name="scan-outline" size={10} color="#D1D5DB" />
+                <Text className="text-gray-300 text-[8px] font-bold ml-1">Anverso</Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View className="w-full h-full items-center justify-center">
+              <Ionicons name="image-outline" size={24} color="#333" />
+              <Text className="text-gray-600 text-[10px] mt-1">Sin Anverso</Text>
             </View>
-          </TouchableOpacity>
-        ) : (
-          <View className="w-full h-[200px] items-center justify-center">
-            <Ionicons name="image-outline" size={32} color="#333" />
-            <Text className="text-gray-600 text-xs mt-2">Sin imagen provista</Text>
-          </View>
-        )}
+          )}
+        </View>
+
+        {/* Reverso */}
+        <View className="flex-1 rounded-[20px] overflow-hidden bg-[#0A0A0A] border border-white/5 relative h-32">
+          {backImage ? (
+            <TouchableOpacity activeOpacity={0.9} onPress={() => onImagePress(backImage)} className="w-full h-full">
+              <Image 
+                source={{ uri: backImage }} 
+                style={{ width: '100%', height: '100%' }}
+                contentFit="cover"
+                transition={300}
+              />
+              <View className="absolute bottom-2 left-2 bg-black/70 px-2 py-1 rounded-full flex-row items-center">
+                <Ionicons name="barcode-outline" size={10} color="#D1D5DB" />
+                <Text className="text-gray-300 text-[8px] font-bold ml-1">Reverso</Text>
+              </View>
+            </TouchableOpacity>
+          ) : (
+            <View className="w-full h-full items-center justify-center">
+              <Ionicons name="image-outline" size={24} color="#333" />
+              <Text className="text-gray-600 text-[10px] mt-1">Sin Reverso</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Acciones */}
