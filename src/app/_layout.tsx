@@ -1,11 +1,22 @@
+import * as Notifications from 'expo-notifications';
 import { Href, Stack, useRootNavigationState, useRouter, useSegments } from 'expo-router';
 import { Provider, useAtom } from 'jotai';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, PanResponder, View } from 'react-native';
 import '../global.css';
 import { getExtendedProfile } from '../services/authService';
 import { supabase } from '../services/supabase';
 import { authAtom } from '../store/authAtom';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 /**
  * Inicializador del Layout de la app que gestiona la autenticación y redirecciones automáticas.
@@ -17,8 +28,59 @@ function InitialLayout() {
   const [authState, setAuthState] = useAtom(authAtom);
   const [isReady, setIsReady] = useState(false);
 
+  // --- MOTOR DE INACTIVIDAD (10 MINUTOS) ---
+  const timerRef = useRef<any>(null);
+  const INACTIVITY_TIME = 10 * 60 * 1000; // 10 minutos en milisegundos
+
+  const resetInactivityTimeout = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    // Solo iniciamos el temporizador si el usuario está autenticado
+    if (authState.isAuthenticated) {
+      timerRef.current = setTimeout(async () => {
+        Alert.alert(
+          '⏳ Sesión Expirada',
+          'Por tu seguridad, hemos cerrado la sesión por inactividad.',
+          [{ text: 'Entendido' }]
+        );
+        await supabase.auth.signOut();
+      }, INACTIVITY_TIME);
+    }
+  }, [authState.isAuthenticated]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      // Captura cualquier toque o gesto en la pantalla antes de que llegue a los botones
+      onStartShouldSetPanResponderCapture: () => {
+        resetInactivityTimeout();
+        return false; // Permite que el toque siga su curso hacia los botones reales
+      },
+      onMoveShouldSetPanResponderCapture: () => {
+        resetInactivityTimeout();
+        return false;
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    resetInactivityTimeout();
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [resetInactivityTimeout]);
+  // ----------------------------------------
+
   useEffect(() => {
     setIsReady(true);
+
+    // Solicitar permisos de notificación nativa
+    const requestPermissions = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permisos de notificación denegados por el usuario.');
+      }
+    };
+    requestPermissions();
   }, []);
 
   useEffect(() => {
@@ -103,15 +165,18 @@ function InitialLayout() {
     }
   }, [authState.isAuthenticated, authState.user, authState.session, authState.isLoading, segments, navigationState?.key, isReady]);
 
-  if (authState.isLoading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#0A0A0A', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#5C8FFB" />
-      </View>
-    );
-  }
-
-  return <Stack screenOptions={{ headerShown: false }} />;
+  // Envolvemos toda la app con el PanResponder para detectar cualquier toque
+  return (
+    <View style={{ flex: 1, backgroundColor: '#0A0A0A' }} {...panResponder.panHandlers}>
+      {authState.isLoading ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#5C8FFB" />
+        </View>
+      ) : (
+        <Stack screenOptions={{ headerShown: false }} />
+      )}
+    </View>
+  );
 }
 
 /**

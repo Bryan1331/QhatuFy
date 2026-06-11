@@ -112,6 +112,34 @@ export default function AdminDashboard() {
           </View>
         </View>
 
+        {/* --- TARJETA: AUDITORÍA DE PAGOS --- */}
+        <View className="px-6 mt-6">
+          <View className="bg-[#1C1C1E] rounded-[32px] p-7 border border-emerald-500/20">
+            <View className="bg-emerald-500/20 self-start flex-row items-center px-3 py-1.5 rounded-full border border-emerald-500/30 mb-5">
+              <Ionicons name="cash" size={12} color="#10B981" />
+              <Text className="text-emerald-400 text-[10px] font-bold tracking-widest ml-1.5 uppercase">Tesorería</Text>
+            </View>
+            <Text className="text-white text-2xl font-bold leading-tight mb-4 tracking-tight">Revisión de Pagos</Text>
+            <View className="flex-row items-center mb-6">
+              <Ionicons name="wallet-outline" size={18} color="#10B981" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#10B981" className="ml-3" />
+              ) : (
+                <Text className="text-emerald-400 text-sm font-bold ml-2.5">
+                  {stats.pendingPayments || 0} Vouchers en Cola
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={() => router.push('/(admin)/verify-payments' as Href)}
+              className="bg-emerald-500 rounded-full py-3.5 px-6 self-start flex-row items-center shadow-lg shadow-emerald-500/20"
+            >
+              <Text className="text-[#0A0A0A] font-bold text-[14px] mr-2">Auditar Vouchers</Text>
+              <Ionicons name="arrow-forward" size={18} color="#0A0A0A" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* --- TARJETA: GESTIÓN DE LOCALES --- */}
         <View className="px-6 mt-6">
           <TouchableOpacity 

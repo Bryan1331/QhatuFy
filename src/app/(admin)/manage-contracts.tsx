@@ -20,6 +20,7 @@ export default function ManageContractsScreen() {
   const [pdfFile, setPdfFile] = useState<any>(null);
   const [monto, setMonto] = useState('');
   const [fechaPago, setFechaPago] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showInquilinosModal, setShowInquilinosModal] = useState(false);
@@ -68,6 +69,16 @@ export default function ManageContractsScreen() {
     setFechaPago(cleaned);
   };
 
+  const handleFechaFinChange = (text: string) => {
+    let cleaned = text.replace(/[^0-9]/g, '');
+    if (cleaned.length > 2 && cleaned.length <= 4) {
+      cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2);
+    } else if (cleaned.length > 4) {
+      cleaned = cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4) + '/' + cleaned.slice(4, 8);
+    }
+    setFechaFin(cleaned);
+  };
+
   const handlePickPDF = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
@@ -78,7 +89,7 @@ export default function ManageContractsScreen() {
   };
 
   const handleSubmitContract = async () => {
-    if (!selectedInquilino || !selectedLocal || !pdfFile || !monto || !fechaPago) {
+    if (!selectedInquilino || !selectedLocal || !pdfFile || !monto || !fechaPago || !fechaFin) {
       Alert.alert('Incompleto', 'Llena todos los campos.');
       return;
     }
@@ -120,17 +131,36 @@ export default function ManageContractsScreen() {
         .update({ documento_url: publicUrlData.publicUrl })
         .eq('id', newContract.id);
 
-      // Insertar el pago inicial del contrato en soles (PEN)
-      const { error: pagoError } = await supabase.from('pagos').insert([{
-        contrato_id: newContract.id,
-        monto: parseFloat(monto),
-        moneda: 'PEN',
-        fecha_vencimiento: isoDate,
-        estado: 'pendiente'
-      }]);
-      if (pagoError) console.error("Error insertando pago:", pagoError);
+      // --- MOTOR GENERADOR DE CRONOGRAMA ---
+      const [diaIni, mesIni, anioIni] = fechaPago.split('/').map(Number);
+      const [diaFin, mesFin, anioFin] = fechaFin.split('/').map(Number);
 
-      Alert.alert('¡Contrato Creado!', 'Se generó el contrato y el pago inicial.', [
+      // Usamos Date.UTC para evitar que la zona horaria del dispositivo adelante o atrase los días
+      let currentDate = new Date(Date.UTC(anioIni, mesIni - 1, diaIni, 12, 0, 0));
+      const endDate = new Date(Date.UTC(anioFin, mesFin - 1, diaFin, 12, 0, 0));
+
+      const pagosAGenerar = [];
+
+      // Bucle: Mientras la fecha actual sea menor o igual a la fecha de fin
+      while (currentDate <= endDate) {
+        pagosAGenerar.push({
+          contrato_id: newContract.id,
+          monto: parseFloat(monto),
+          moneda: 'PEN',
+          fecha_vencimiento: currentDate.toISOString(),
+          estado: 'pendiente'
+        });
+
+        // Avanzar exactamente 1 mes en el calendario
+        currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
+      }
+
+      // Insertar todas las cuotas de golpe en Supabase
+      const { error: pagosError } = await supabase.from('pagos').insert(pagosAGenerar);
+      if (pagosError) console.error("Error insertando el cronograma:", pagosError);
+      // -------------------------------------
+
+      Alert.alert('¡Contrato Creado!', 'Se generó el contrato y el cronograma de pagos.', [
         { text: 'Aceptar', onPress: () => router.back() }
       ]);
 
@@ -184,21 +214,36 @@ export default function ManageContractsScreen() {
             <Ionicons name="chevron-down" size={20} color="#6B7280" />
           </TouchableOpacity>
 
-          {/* Datos Financieros */}
-          <Text className="text-white font-bold mb-2">3. Primer Pago (Monto y Fecha)</Text>
+          {/* Datos Financieros y Cronograma */}
+          <Text className="text-white font-bold mb-2">3. Cronograma de Pagos</Text>
+          
+          <View className="bg-[#151517] border border-white/10 rounded-2xl px-4 h-14 justify-center mb-3">
+            <TextInput placeholder="Monto Mensual (Ej. 500)" placeholderTextColor="#6B7280" className="text-white font-bold" keyboardType="numeric" value={monto} onChangeText={setMonto} />
+          </View>
+          
           <View className="flex-row gap-3 mb-6">
             <View className="flex-1 bg-[#151517] border border-white/10 rounded-2xl px-4 h-14 justify-center">
-              <TextInput placeholder="Monto (Ej. 500)" placeholderTextColor="#6B7280" className="text-white font-bold" keyboardType="numeric" value={monto} onChangeText={setMonto} />
-            </View>
-            <View className="flex-1 bg-[#151517] border border-white/10 rounded-2xl px-4 h-14 justify-center">
+              <Text className="text-gray-500 text-[9px] absolute top-2 left-4 uppercase font-bold">Inicio Contrato</Text>
               <TextInput
                 placeholder="DD/MM/YYYY"
                 placeholderTextColor="#6B7280"
-                className="text-white font-bold"
+                className="text-white font-bold mt-3"
                 keyboardType="numeric"
                 maxLength={10}
                 value={fechaPago}
                 onChangeText={handleDateChange}
+              />
+            </View>
+            <View className="flex-1 bg-[#151517] border border-white/10 rounded-2xl px-4 h-14 justify-center">
+              <Text className="text-gray-500 text-[9px] absolute top-2 left-4 uppercase font-bold">Fin Contrato</Text>
+              <TextInput
+                placeholder="DD/MM/YYYY"
+                placeholderTextColor="#6B7280"
+                className="text-white font-bold mt-3"
+                keyboardType="numeric"
+                maxLength={10}
+                value={fechaFin}
+                onChangeText={handleFechaFinChange}
               />
             </View>
           </View>

@@ -37,3 +37,22 @@ export const uploadDocumentImage = async (userId: string, uri: string): Promise<
     throw new Error(error.message || 'Error al subir el documento de forma segura.');
   }
 };
+
+/**
+ * Sube un voucher de pago al bucket 'vouchers' en Supabase Storage
+ */
+export const uploadVoucherImage = async (userId: string, uri: string): Promise<string> => {
+  try {
+    const fileName = `voucher_${userId}_${Date.now()}.jpg`;
+    const base64File = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
+    const fileBuffer = decode(base64File);
+
+    const { error } = await supabase.storage.from('vouchers').upload(fileName, fileBuffer, { contentType: 'image/jpeg', upsert: false });
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage.from('vouchers').getPublicUrl(fileName);
+    return publicUrlData.publicUrl;
+  } catch (error: any) {
+    throw new Error(error.message || 'Error al subir el voucher.');
+  }
+};

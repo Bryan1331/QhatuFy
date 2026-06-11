@@ -60,24 +60,79 @@ export const updateVerification = async (userId: string, status: 'aprobado' | 'r
   }
 };
 
-/**
- * Obtiene las estadísticas generales del dashboard de administración.
- */
 export const getDashboardStats = async () => {
   try {
-    const { count, error } = await supabase
+    const { count: pendingKYC } = await supabase
       .from('perfiles')
       .select('*', { count: 'exact', head: true })
       .eq('verificacion_status', 'pendiente')
       .neq('role', 'admin');
 
-    if (error) throw new Error(error.message);
+    const { count: pendingPayments } = await supabase
+      .from('pagos')
+      .select('*', { count: 'exact', head: true })
+      .eq('estado', 'en_revision');
 
     return {
-      pendingKYC: count || 0,
+      pendingKYC: pendingKYC || 0,
+      pendingPayments: pendingPayments || 0, // Nuevo contador
     };
   } catch (error: any) {
     throw new Error(error.message || 'Error al obtener las estadísticas del dashboard.');
+  }
+};
+
+/**
+ * Obtiene los pagos en estado de revisión junto con los datos del inquilino y local.
+ */
+export const getPendingPayments = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('pagos')
+      .select(`
+        id, 
+        monto_final_pagado, 
+        voucher_url, 
+        moneda, 
+        fecha_vencimiento,
+        contratos ( 
+          perfiles ( nombre ), 
+          locales ( nombre ) 
+        )
+      `)
+      .eq('estado', 'en_revision');
+
+    if (error) throw new Error(error.message);
+
+    return (data || []).map((p: any) => ({
+      id: p.id,
+      monto: p.monto_final_pagado,
+      voucherUrl: p.voucher_url,
+      moneda: p.moneda,
+      fechaVencimiento: p.fecha_vencimiento,
+      inquilinoNombre: p.contratos?.perfiles?.nombre || 'Usuario Desconocido',
+      localNombre: p.contratos?.locales?.nombre || 'Local Desconocido'
+    }));
+  } catch (error: any) {
+    console.error('Error fetching pending payments:', error);
+    return [];
+  }
+};
+
+/**
+ * Aprueba o rechaza un pago. Si se rechaza, vuelve a estado 'pendiente' para que el usuario intente de nuevo.
+ */
+export const reviewPayment = async (pagoId: string, status: 'pagado' | 'rechazado') => {
+  try {
+    const updatePayload = status === 'pagado' 
+      ? { estado: 'pagado' }
+      : { estado: 'pendiente', voucher_url: null, monto_final_pagado: null }; // Resetear si es rechazado
+
+    const { error } = await supabase.from('pagos').update(updatePayload).eq('id', pagoId);
+    if (error) throw new Error(error.message);
+    return true;
+  } catch (error: any) {
+    throw new Error(error.message || 'Error al procesar el pago.');
   }
 };
 

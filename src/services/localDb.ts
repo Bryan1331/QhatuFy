@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
 export const getLocalDb = async () => {
-  return await SQLite.openDatabaseAsync('qhatufy_v2.db');
+  return await SQLite.openDatabaseAsync('qhatufy_v3.db');
 };
 
 export const initLocalDb = async () => {

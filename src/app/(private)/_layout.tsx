@@ -61,6 +61,7 @@ export default function PrivateLayout() {
       <Tabs.Screen name="my-contracts" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="rules" options={{ href: null, headerShown: false }} />
       <Tabs.Screen name="profile" options={{ href: null, headerShown: false }} /> {/* NUEVA RUTA */}
+      <Tabs.Screen name="pay-rent" options={{ href: null, headerShown: false }} /> {/* NUEVA RUTA OCULTA */}
     </Tabs>
   );
 }
