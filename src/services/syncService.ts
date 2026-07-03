@@ -102,13 +102,14 @@ export const getLocalPayments = async (): Promise<any[]> => {
     dueDate.setHours(0,0,0,0);
     now.setHours(0,0,0,0);
     
+    const isEnRevision = r.estado === 'en_revision';
     let daysLate = 0;
-    if (r.estado === 'pendiente' && now > dueDate) {
+    if (!isEnRevision && (r.estado === 'pendiente' || r.estado === 'rechazado' || !r.estado) && now > dueDate) {
       const diffTime = Math.abs(now.getTime() - dueDate.getTime());
       daysLate = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
-    const penalty = daysLate * 30; // 30 Soles por día
+    const penalty = isEnRevision ? 0 : daysLate * 30; // 30 Soles por día
     const finalAmount = Number(r.monto) + penalty;
 
     return {
@@ -121,7 +122,7 @@ export const getLocalPayments = async (): Promise<any[]> => {
       currency: r.moneda,
       dueDate: r.fecha_vencimiento,
       status: r.estado || 'pendiente',
-      isPaid: r.estado === 'pagado' || r.estado === 'en_revision' // Si está en revisión, lo quitamos del total pendiente
+      isPaid: r.estado === 'pagado'
     };
   });
 };

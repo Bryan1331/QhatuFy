@@ -28,6 +28,8 @@ export default function PayRentScreen() {
   }, [paymentId]);
 
   const pickImage = async () => {
+    if (paymentData?.status === 'en_revision') return;
+
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') return Alert.alert('Permiso denegado', 'Necesitamos acceso a galería.');
 
@@ -106,33 +108,46 @@ export default function PayRentScreen() {
         </View>
 
         {/* Subir Voucher */}
-        <Text className="text-white text-sm font-bold mb-4">Sube tu Comprobante</Text>
-        <TouchableOpacity 
-          onPress={pickImage}
-          disabled={loading}
-          className="w-full h-48 rounded-[24px] border-2 border-dashed border-white/20 bg-[#1C1C1E] items-center justify-center overflow-hidden mb-8"
-        >
-          {voucherUri ? (
-            <Image source={{ uri: voucherUri }} className="w-full h-full object-cover" />
-          ) : (
-            <View className="items-center">
-              <View className="bg-blue-500/20 w-12 h-12 rounded-full items-center justify-center mb-3">
-                <Ionicons name="cloud-upload" size={24} color="#5C8FFB" />
-              </View>
-              <Text className="text-white font-bold text-sm">Toca para subir captura</Text>
-              <Text className="text-gray-500 text-xs mt-1">Formatos: JPG, PNG</Text>
+        {paymentData.status === 'en_revision' ? (
+          <View className="w-full bg-[#1C1C1E] border border-amber-500/20 rounded-[24px] p-6 items-center justify-center mb-12">
+            <View className="bg-amber-500/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+              <Ionicons name="time" size={28} color="#F59E0B" />
             </View>
-          )}
-        </TouchableOpacity>
+            <Text className="text-white font-bold text-sm text-center leading-relaxed">
+              Comprobante en revisión. Te notificaremos cuando el administrador lo valide.
+            </Text>
+          </View>
+        ) : (
+          <>
+            <Text className="text-white text-sm font-bold mb-4">Sube tu Comprobante</Text>
+            <TouchableOpacity 
+              onPress={pickImage}
+              disabled={loading}
+              className="w-full h-48 rounded-[24px] border-2 border-dashed border-white/20 bg-[#1C1C1E] items-center justify-center overflow-hidden mb-8"
+            >
+              {voucherUri ? (
+                <Image source={{ uri: voucherUri }} className="w-full h-full object-cover" />
+              ) : (
+                <View className="items-center">
+                  <View className="bg-blue-500/20 w-12 h-12 rounded-full items-center justify-center mb-3">
+                    <Ionicons name="cloud-upload" size={24} color="#5C8FFB" />
+                  </View>
+                  <Text className="text-white font-bold text-sm">Toca para subir captura</Text>
+                  <Text className="text-gray-500 text-xs mt-1">Formatos: JPG, PNG</Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
-        <TouchableOpacity 
-          onPress={handlePaymentSubmit}
-          disabled={!voucherUri || loading}
-          className={`w-full bg-blue-600 rounded-full py-4 items-center justify-center flex-row mb-12 ${!voucherUri || loading ? 'opacity-50' : ''}`}
-        >
-          {loading && <ActivityIndicator color="#FFF" size="small" className="mr-2" />}
-          <Text className="text-white font-bold tracking-wide">ENVIAR A REVISIÓN</Text>
-        </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={handlePaymentSubmit}
+              disabled={!voucherUri || loading}
+              className={`w-full bg-blue-600 rounded-full py-4 items-center justify-center flex-row mb-12 ${!voucherUri || loading ? 'opacity-50' : ''}`}
+            >
+              {loading && <ActivityIndicator color="#FFF" size="small" className="mr-2" />}
+              <Text className="text-white font-bold tracking-wide">ENVIAR A REVISIÓN</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

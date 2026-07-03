@@ -10,11 +10,15 @@ export function PaymentCard({ payments }: { payments: any[] }) {
   const pendingPayments = useMemo(() => payments.filter(p => p.isPaid === false), [payments]);
 
   const totalAmount = useMemo(() => {
-    return pendingPayments.reduce((sum, payment) => sum + payment.totalAmount, 0); // Ahora suma la mora
+    return pendingPayments
+      .filter(p => p.status !== 'en_revision')
+      .reduce((sum, payment) => sum + payment.totalAmount, 0); // Ahora suma la mora
   }, [pendingPayments]);
 
   const totalPenalty = useMemo(() => {
-    return pendingPayments.reduce((sum, payment) => sum + (payment.penalty || 0), 0);
+    return pendingPayments
+      .filter(p => p.status !== 'en_revision')
+      .reduce((sum, payment) => sum + (payment.penalty || 0), 0);
   }, [pendingPayments]);
 
   const sortedPayments = useMemo(() => {
@@ -102,15 +106,27 @@ export function PaymentCard({ payments }: { payments: any[] }) {
                     </Text>
                   </View>
                 )}
+
+                {payment.status === 'rechazado' && (
+                  <Text className="text-red-500 text-[10px] font-semibold mt-1">
+                    Pago rechazado. Por favor, vuelve a subir el comprobante.
+                  </Text>
+                )}
               </View>
 
-              {/* Botón de pago individual (Derecha) */}
-              <TouchableOpacity
-                onPress={() => router.push({ pathname: '/(private)/pay-rent', params: { paymentId: payment.id } } as any)}
-                className="bg-blue-600 px-4 py-2.5 rounded-full shadow-lg shadow-blue-500/20 active:bg-blue-700"
-              >
-                <Text className="text-white font-bold text-[11px] tracking-wide">PAGAR</Text>
-              </TouchableOpacity>
+              {/* Botón de pago / Badge de estado (Derecha) */}
+              {payment.status === 'en_revision' ? (
+                <View className="bg-amber-500/10 border border-amber-500/30 px-3.5 py-1.5 rounded-full">
+                  <Text className="text-amber-500 font-bold text-[10px] tracking-wider uppercase">En Revisión</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => router.push({ pathname: '/(private)/pay-rent', params: { paymentId: payment.id } } as any)}
+                  className="bg-blue-600 px-4 py-2.5 rounded-full shadow-lg shadow-blue-500/20 active:bg-blue-700"
+                >
+                  <Text className="text-white font-bold text-[11px] tracking-wide">PAGAR</Text>
+                </TouchableOpacity>
+              )}
 
             </View>
           ))}
